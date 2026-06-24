@@ -1,10 +1,18 @@
-# Weight Studio (VNyan plugin)
+# VNyan Weight Studio — Bone Weight Painter for VTuber Avatars
 
-A runtime bone-weight editor for VNyan. Paint, smooth, and rebalance skin weights
-directly on a loaded avatar — with an **unlimited** number of bone influences per
-vertex — then export to **VRM 0.x**, **VRM 1.0**, or **VBX** (a custom format that
-preserves >4 influences/vertex, re-loadable via the companion **Weight Studio
-Reader** plugin).
+A runtime **bone weight editor** for [VNyan](https://suvidriel.itch.io/vnyan). Paint,
+smooth, and rebalance skin weights directly on a loaded avatar — with an **unlimited**
+number of bone influences per vertex — then export to **VRM 0.x**, **VRM 1.0**, or
+**VBX** (a custom format that preserves >4 influences/vertex, re-loadable via the
+companion **Weight Studio Reader** plugin).
+
+Designed for VTubers who need to fix or tweak avatar skinning without leaving VNyan or
+reopening Blender/Unity. Works with VSeeFace-compatible `.vsfavatar` avatars and
+standard VRM models.
+
+> **Quick install:** drop `dist/VNyanWeightStudio.dll` and `dist/WeightStudio.vnobj`
+> into `C:\Program Files\VNyan\Items\Assemblies\WeightStudio\`, restart VNyan, and
+> click **Weight Studio** in the Plugins window. Or run `install.bat` (requires admin).
 
 ## What it does
 
