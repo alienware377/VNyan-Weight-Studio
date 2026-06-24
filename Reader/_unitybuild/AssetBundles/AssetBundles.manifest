@@ -1,0 +1,7 @@
+ManifestFileVersion: 0
+CRC: 1844771776
+AssetBundleManifest:
+  AssetBundleInfos:
+    Info_0:
+      Name: vnyanweightstudioreader
+      Dependencies: {}

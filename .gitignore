@@ -1,0 +1,24 @@
+# Unity generated
+_unitybuild/Library/
+_unitybuild/Logs/
+_unitybuild/Temp/
+_unitybuild/UserSettings/
+_unitybuild/obj/
+_unitybuild/*.suo
+_unitybuild/*.user
+_unitybuild/.vs/
+
+# Same for Reader
+Reader/_unitybuild/Library/
+Reader/_unitybuild/Logs/
+Reader/_unitybuild/Temp/
+Reader/_unitybuild/UserSettings/
+Reader/_unitybuild/obj/
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Build artifacts (keep dist/)
+*.user
+*.sln.docstates
