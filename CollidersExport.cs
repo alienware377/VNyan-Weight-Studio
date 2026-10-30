@@ -42,7 +42,7 @@ namespace VNyanWeightStudio
             return path;
         }
 
-        // ---- JayoPhysBones (physbones.json) — matches PhysBoneConfig field layout ----
+        // ---- JayoPhysBones (physbones.json): matches PhysBoneConfig field layout ----
         public static object JayoPhysBones(IList<ColliderGen.GenCollider> cols)
         {
             var list = new List<object>();
@@ -72,7 +72,7 @@ namespace VNyanWeightStudio
             };
         }
 
-        // ---- JayoJiggle (jigglephysics.json) — matches JiggleConfig field layout ----
+        // ---- JayoJiggle (jigglephysics.json): matches JiggleConfig field layout ----
         public static object JayoJiggle(IList<ColliderGen.GenCollider> cols)
         {
             var list = new List<object>();

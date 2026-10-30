@@ -71,7 +71,7 @@ namespace VNyanWeightStudio
             const int bufChars = 4096;
             IntPtr fileBuf   = Marshal.AllocHGlobal(bufChars * 2);
             IntPtr titleBuf  = Marshal.AllocHGlobal(512 * 2);
-            // filter is "Label\0pattern\0\0" — embedded nulls, so build it by hand.
+            // filter is "Label\0pattern\0\0": embedded nulls, so build it by hand.
             IntPtr filterBuf = Marshal.StringToHGlobalUni((filterLabel ?? "Files") + "\0" + (filterPattern ?? "*.*") + "\0");
             try
             {

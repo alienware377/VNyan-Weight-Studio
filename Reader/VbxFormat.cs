@@ -7,7 +7,7 @@ using UnityEngine;
 namespace VNyanWeightStudio
 {
     // ============================================================================
-    //  VBX  —  "VNyan Bone eXchange"
+    //  VBX: "VNyan Bone eXchange"
     //
     //  A self-contained binary avatar-skinning interchange format. Unlike VRM/glTF
     //  (which the VRM consumer convention caps at 4 bone influences per vertex), VBX
@@ -25,14 +25,14 @@ namespace VNyanWeightStudio
     {
         public const uint Magic = 0x31584256;   // "VBX1" little-endian
         // Version history:
-        //   1 — bones, humanoid, meshes (geometry/weights/blendshapes/materials).
-        //   2 — adds the colliders block (auto-fit physics colliders) at the end.
-        //   3 — full generic materials: per material we now also store the shader's
+        //   1: bones, humanoid, meshes (geometry/weights/blendshapes/materials).
+        //   2: adds the colliders block (auto-fit physics colliders) at the end.
+        //   3: full generic materials: per material we now also store the shader's
         //       complete property set (every float/color/vector/texture + keywords +
         //       render queue) so ANY shader (Standard, MToon, Poiyomi, …) reconstructs
         //       exactly wherever that shader exists at load time. Textures are pooled at
         //       the doc level (shared textures stored once) in a trailing block.
-        //   4 — adds an optional embedded source AssetBundle (the original .vsfavatar
+        //   4: adds an optional embedded source AssetBundle (the original .vsfavatar
         //       bytes) in a trailing block. The Reader can load it in-memory at runtime
         //       and harvest the REAL, fully-compiled material instances (e.g. locked
         //       Poiyomi, which can't be reconstructed from properties alone) and assign
@@ -127,7 +127,7 @@ namespace VNyanWeightStudio
     {
         public string name;
         public string shader;
-        // Legacy (v1/v2) best-effort fields — still written for backward compatibility
+        // Legacy (v1/v2) best-effort fields, still written for backward compatibility
         // and used as a fallback when the original shader is unavailable at load time.
         public Color color = Color.white;
         public Color emission = Color.black;
@@ -137,7 +137,7 @@ namespace VNyanWeightStudio
         public byte[] normalTexPng;     // null if none
         public byte[] emissionTexPng;   // null if none
 
-        // v3 — full generic property capture. When the named shader exists at load
+        // v3: full generic property capture. When the named shader exists at load
         // time these reconstruct the material exactly, for ANY shader.
         public string[] keywords;                                  // enabled shader keywords
         public List<VbxMatFloat>   floats   = new List<VbxMatFloat>();   // Float/Range/Int props

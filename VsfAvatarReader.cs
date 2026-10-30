@@ -7,7 +7,7 @@ namespace VNyanWeightStudio
     /// <summary>
     /// Opens a VSeeFace / VNyan <c>.vsfavatar</c> file (a standard Unity "UnityFS"
     /// AssetBundle) and pulls the avatar prefab out of it so a fully standalone .vbx
-    /// can be built straight from the file — no dependency on VNyan having that avatar
+    /// can be built straight from the file, no dependency on VNyan having that avatar
     /// loaded, and nothing left behind in the live scene.
     ///
     /// We read by momentarily instantiating the prefab (parked far off-screen, hidden,
@@ -17,7 +17,7 @@ namespace VNyanWeightStudio
     /// meshes/GameObjects in the running scene or bog down resources after export.
     ///
     /// IMPORTANT: the instance's renderers still reference the bundle's shared Mesh /
-    /// Material / Texture assets — so callers MUST finish reading (VbxExporter.Build,
+    /// Material / Texture assets, so callers MUST finish reading (VbxExporter.Build,
     /// which copies vertices + bakes textures to PNG) BEFORE calling <see cref="Cleanup"/>,
     /// which unloads the bundle and frees those assets.
     /// </summary>
@@ -85,7 +85,7 @@ namespace VNyanWeightStudio
             // and the root bone has no parent, so any world offset here would be baked
             // straight into the .vbx (and the avatar would render far off-screen when
             // loaded standalone). Keep the authored rest pose intact and instead just
-            // hide the clone by disabling its renderers — invisibility without touching
+            // hide the clone by disabling its renderers: invisibility without touching
             // any data the exporter reads. (Export is synchronous and the clone is
             // DestroyImmediate'd before any frame renders anyway; this is belt-and-braces.)
             foreach (var rend in inst.GetComponentsInChildren<Renderer>(true))

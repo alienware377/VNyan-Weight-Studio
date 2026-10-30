@@ -20,9 +20,14 @@ namespace VNyanWeightStudioReader
     ///   Texts:   Title, Label_Status
     ///   Buttons: Button_Rescan, Button_LoadSel, Button_RemoveLast, Button_OpenFolder, Button_Close
     ///   ScrollRect content: FileContent
+    /// Button_Close is hidden at runtime: the shared X at the top-right (PluginChrome) replaces it.
     /// </summary>
     public class WeightStudioReaderPlugin : MonoBehaviour, VNyanInterface.IButtonClickedHandler
     {
+        public const string VERSION = "v1.1.0";
+        // GitHub repo the update check reads (shared with Weight Studio; the check stays quiet while there are no releases)
+        public const string REPO = "alienware377/VNyan-Weight-Studio";
+
         public GameObject windowPrefab;
 
         GameObject window;
@@ -69,6 +74,19 @@ namespace VNyanWeightStudioReader
                 window.GetComponent<RectTransform>().anchoredPosition = Vector2.zero;
                 window.SetActive(false);
                 WireUI();
+
+                // update badge sits straight left of the X (x 264..376 of 420). The centred
+                // "Weight Studio Reader" title would run under it, so when the badge shows the
+                // title rect ends 6 px left of the badge and stays centred in what is left.
+                RectTransform winRt = window.GetComponent<RectTransform>();
+                PluginChrome.CheckForUpdate(this, winRt, REPO, VERSION, "[WeightStudioReader] ", uiFont, 0f, badge =>
+                {
+                    Text title = Find<Text>("Title");
+                    if (title == null) return;
+                    RectTransform tr = title.rectTransform;
+                    float badgeLeft = winRt.rect.width + badge.anchoredPosition.x - badge.sizeDelta.x;
+                    tr.sizeDelta = new Vector2(Mathf.Max(60f, badgeLeft - 6f - tr.anchoredPosition.x), tr.sizeDelta.y);
+                });
             }
         }
 
@@ -109,6 +127,12 @@ namespace VNyanWeightStudioReader
             BindButton("Button_RemoveLast", RemoveLast);
             BindButton("Button_OpenFolder", OpenFolder);
             BindButton("Button_Close", () => { if (window != null) window.SetActive(false); });
+
+            // shared X at the top-right closes the window like the old bottom Close did; that
+            // Close is hidden and Open Folder takes the whole bottom row
+            RectTransform winRt = window.GetComponent<RectTransform>();
+            PluginChrome.EnsureCloseX(winRt, () => { if (window != null) window.SetActive(false); }, uiFont);
+            PluginChrome.HideOtherClose(winRt, "Button_Close");
 
             fileContent = Find<RectTransform>("FileContent");
             statusText = Find<Text>("Label_Status");
@@ -162,7 +186,7 @@ namespace VNyanWeightStudioReader
                 y += rowH;
             }
             if (files.Count == 0)
-                MakeInfo(fileContent, "(no .vbx files — export one from Weight Studio first)", y, rowH);
+                MakeInfo(fileContent, "(no .vbx files: export one from Weight Studio first)", y, rowH);
             fileContent.sizeDelta = new Vector2(0f, Mathf.Max(y, 1f));
         }
 
@@ -185,7 +209,7 @@ namespace VNyanWeightStudioReader
 
                 // Standalone (no live avatar to borrow real materials from): prefer the
                 // REAL compiled materials embedded in the .vbx (the original .vsfavatar
-                // bundle — gives faithful locked Poiyomi etc.). Where that's unavailable,
+                // bundle, which gives faithful locked Poiyomi etc.). Where that's unavailable,
                 // fall back to reconstructing from the v3 property capture (exact shader
                 // if present in VNyan, else remapped to the closest available substitute).
                 // Only enable the embedded-bundle path when standalone, so we never
@@ -211,7 +235,7 @@ namespace VNyanWeightStudioReader
                         // Link blendshapes so VNyan's expressions/visemes/blinks (which it
                         // writes to the original renderers) get mirrored onto the copy.
                         mirror = BuildMirror(go, original.transform);
-                        // Hide only the original's RENDERERS — keep its GameObject active so
+                        // Hide only the original's RENDERERS; keep its GameObject active so
                         // VNyan keeps animating the shared bones our meshes ride on.
                         hid = HideRenderers(original);
                         Debug.Log("[WeightStudioReader] Replaced live avatar '" + original.name +
@@ -247,7 +271,7 @@ namespace VNyanWeightStudioReader
                         }
                     if (original != null)
                         SetStatus("Loaded '" + go.name + "': " + verts + " verts, up to " + maxInf +
-                                  " bones/vertex.  Attached to your live avatar — it moves with tracking and keeps its shaders.");
+                                  " bones/vertex.  Attached to your live avatar: it moves with tracking and keeps its shaders.");
                     else
                         SetStatus("STATIC PREVIEW of '" + go.name + "': " + verts + " verts, up to " + maxInf +
                                   " bones/vertex.  No avatar is loaded, so VNyan can't track this. " +
@@ -372,12 +396,12 @@ namespace VNyanWeightStudioReader
                     Debug.Log("[WeightStudioReader][standalone] combined world bounds center=" +
                               combined.center + " size=" + combined.size);
                 else
-                    Debug.LogWarning("[WeightStudioReader][standalone] NO renderer bounds — geometry/bones may be degenerate.");
+                    Debug.LogWarning("[WeightStudioReader][standalone] NO renderer bounds, geometry/bones may be degenerate.");
                 Debug.Log("[WeightStudioReader][standalone] shaders: " + string.Join(", ", new List<string>(shaderNames).ToArray()));
                 if (fallbackShaders.Count > 0)
                     Debug.LogWarning("[WeightStudioReader][standalone] some materials fell back to generic shaders (" +
                                      string.Join(", ", new List<string>(fallbackShaders).ToArray()) +
-                                     ") — the avatar's original shader was not found in VNyan; colors/visibility may be wrong.");
+                                     "): the avatar's original shader was not found in VNyan; colors/visibility may be wrong.");
             }
             catch (Exception e)
             {
@@ -475,7 +499,7 @@ namespace VNyanWeightStudioReader
 
         // Repoint each imported SkinnedMeshRenderer's bones[] / rootBone at the LIVE
         // avatar's transforms of the same name. The VBX came from this very avatar, so
-        // the rig + rest pose + bindposes match — assigning the live bones makes the
+        // the rig + rest pose + bindposes match, so assigning the live bones makes the
         // meshes deform with VNyan's animated skeleton. Returns how many bones rebound.
         int RebindToLiveSkeleton(GameObject loadedGo, Transform liveRoot)
         {
@@ -577,7 +601,7 @@ namespace VNyanWeightStudioReader
 
         // Find the avatar VNyan currently has in the scene (the one we're replacing),
         // skipping our own loaded copies. Picks the SkinnedMeshRenderer hierarchy with
-        // the most skinned meshes — that's the real body, not a prop.
+        // the most skinned meshes: that's the real body, not a prop.
         GameObject FindLiveAvatar(GameObject extraExclude)
         {
             var counts = new Dictionary<Transform, int>();

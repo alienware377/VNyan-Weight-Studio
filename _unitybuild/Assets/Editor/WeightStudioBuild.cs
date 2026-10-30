@@ -19,6 +19,7 @@ public static class WeightStudioBuild
         const string outDir = "AssetBundles";
 
         GameObject windowAsset = BuildWindowPrefab(windowPrefabPath);
+        GameObject colEdAsset = BuildColliderEditorPrefab("Assets/ColliderEditorWindow.prefab");
 
         // Starter prefab carries the plugin component, pointed at the window.
         // VNyan loads the bundle's addressable "vnyanitem"; root name "VNyanTemp"
@@ -26,6 +27,7 @@ public static class WeightStudioBuild
         GameObject go = new GameObject("VNyanTemp");
         var plugin = go.AddComponent<VNyanWeightStudio.BoneWeightStudioPlugin>();
         plugin.windowPrefab = windowAsset;
+        plugin.colliderEditorPrefab = colEdAsset;
         GameObject starterAsset = PrefabUtility.SaveAsPrefabAsset(go, starterPrefabPath);
         Object.DestroyImmediate(go);
         AssetDatabase.SaveAssets();
@@ -131,6 +133,8 @@ public static class WeightStudioBuild
         y += 26f;
 
         // ---- sliders ----
+        MakeText(body, "Hdr_Brush", "Brush & Smoothing", bx, y, bw, 20f, 12, TextAnchor.MiddleLeft, FontStyle.Bold);
+        y += 24f;
         for (int i = 0; i < KEY.Length; i++)
         {
             SliderRow(body, KEY[i], LBL[i], MIN[i], MAX[i], WHOLE[i], INIT[i], FMT[i], bx, bw, y, true);
@@ -143,7 +147,7 @@ public static class WeightStudioBuild
         MakeHelp(body, "paint", bx + bw - 16f, y + 4f);
         y += 28f;
 
-        MakeText(body, "Lbl_BrushModes", "Brush mode", bx, y, bw - 20f, 20f, 12, TextAnchor.MiddleLeft, FontStyle.Bold);
+        MakeText(body, "Hdr_BrushMode", "Brush mode", bx, y, bw - 20f, 20f, 12, TextAnchor.MiddleLeft, FontStyle.Bold);
         MakeHelp(body, "brushmodes", bx + bw - 16f, y + 2f);
         y += 22f;
 
@@ -166,7 +170,7 @@ public static class WeightStudioBuild
         y += 32f;
 
         // ---- mesh list ----
-        MakeText(body, "Lbl_Meshes", "Meshes", bx, y, bw - 110f, 22f, 12, TextAnchor.MiddleLeft, FontStyle.Bold);
+        MakeText(body, "Hdr_Meshes", "Meshes", bx, y, bw - 110f, 22f, 12, TextAnchor.MiddleLeft, FontStyle.Bold);
         MakeHelp(body, "meshes", bx + bw - 104f, y + 3f);
         MakeButton(body, "Button_RescanMesh", "Rescan", bx + bw - 84f, y, 84f, 22f);
         y += 26f;
@@ -174,7 +178,7 @@ public static class WeightStudioBuild
         y += 110f + 8f;
 
         // ---- bone list ----
-        MakeText(body, "Lbl_Bones", "Bones (active = brush target)", bx, y, bw - 110f, 22f, 12, TextAnchor.MiddleLeft, FontStyle.Bold);
+        MakeText(body, "Hdr_Bones", "Bones (active = brush target)", bx, y, bw - 110f, 22f, 12, TextAnchor.MiddleLeft, FontStyle.Bold);
         MakeHelp(body, "bones", bx + bw - 104f, y + 3f);
         MakeButton(body, "Button_RescanBone", "Refresh", bx + bw - 84f, y, 84f, 22f);
         y += 26f;
@@ -208,12 +212,12 @@ public static class WeightStudioBuild
         y += 36f;
 
         // ---- weight transfer ----
-        MakeText(body, "Lbl_Transfer", "Weight Transfer (copy between meshes)",
+        MakeText(body, "Hdr_Transfer", "Weight Transfer (copy between meshes)",
             bx, y, bw - 20f, 20f, 12, TextAnchor.MiddleLeft, FontStyle.Bold);
         MakeHelp(body, "xfersource", bx + bw - 16f, y + 2f);
         y += 24f;
 
-        MakeText(body, "Label_Source", "Source: (none — pick a mesh, Set Source)",
+        MakeText(body, "Label_Source", "Source: (none: pick a mesh, Set Source)",
             bx, y, bw - 128f, 22f, 11, TextAnchor.MiddleLeft, FontStyle.Normal);
         MakeButton(body, "Button_SetSource", "Set Source", bx + bw - 124f, y, 124f, 22f);
         y += 26f;
@@ -241,8 +245,28 @@ public static class WeightStudioBuild
         MakeButtonWithHelp(body, "Button_Transfer", "Transfer Weights", "xfergo", bx, y, bw, 30f);
         y += 36f;
 
+        // ---- mirror weights ----
+        MakeText(body, "Hdr_Mirror", "Mirror weights (L <-> R)", bx, y, bw - 20f, 20f, 12, TextAnchor.MiddleLeft, FontStyle.Bold);
+        MakeHelp(body, "mirror", bx + bw - 16f, y + 2f);
+        y += 24f;
+
+        MakeToggle(body, "Toggle_mirproj", "Project on current pose (off = exact verts, bind pose)", bx, y, bw - 20f, 22f);
+        MakeHelp(body, "mirproj", bx + bw - 16f, y + 3f);
+        y += 26f;
+
+        SliderRow(body, "mirmix", "Mix", 0f, 100f, true, 100f, "0", bx, bw, y, true); y += 30f;
+
+        float mirbw = (bw - 2f * gap) / 3f;
+        MakeButton(body, "Button_MirAxis",    "Axis: X",            bx + 0f * (mirbw + gap), y, mirbw, 28f);
+        MakeButton(body, "Button_MirSelfPM",  "Self  +  ->  -",     bx + 1f * (mirbw + gap), y, mirbw, 28f);
+        MakeButton(body, "Button_MirSelfMP",  "Self  -  ->  +",     bx + 2f * (mirbw + gap), y, mirbw, 28f);
+        y += 32f;
+
+        MakeButton(body, "Button_MirrorBone", "Mirror Active Bone -> Opposite (L/R)", bx, y, bw, 28f);
+        y += 36f;
+
         // ---- colliders (auto-fit) ----
-        MakeText(body, "Lbl_Colliders", "Colliders (auto-fit physics shapes)",
+        MakeText(body, "Hdr_Colliders", "Colliders (auto-fit physics shapes)",
             bx, y, bw, 20f, 12, TextAnchor.MiddleLeft, FontStyle.Bold);
         y += 24f;
 
@@ -250,7 +274,7 @@ public static class WeightStudioBuild
             bx, y, bw, 18f, 11, TextAnchor.MiddleLeft, FontStyle.Italic);
         y += 22f;
 
-        SliderRow(body, "colradius", "Radius scale",     0.3f, 2.5f,  false, 1f,   "0.00", bx, bw, y, true); y += 30f;
+        SliderRow(body, "colradius", "Radius scale",     0.05f, 2.5f, false, 1f,   "0.00", bx, bw, y, true); y += 30f;
         SliderRow(body, "colminw",   "Min bone weight",  0.1f, 0.95f, false, 0.5f, "0.00", bx, bw, y, true); y += 30f;
         SliderRow(body, "colminv",   "Min verts / bone", 4f,   64f,   true,  12f,  "0",    bx, bw, y, true); y += 30f;
 
@@ -266,13 +290,19 @@ public static class WeightStudioBuild
         MakeButtonWithHelp(body, "Button_GenColliders", "Generate Colliders", "colgen", bx, y, bw, 30f);
         y += 34f;
 
-        float bw2 = (bw - gap) / 2f;
-        MakeButtonWithHelp(body, "Button_ExportColliders", "Export Sidecars",     "colsidecar",  bx + 0f * (bw2 + gap), y, bw2, 28f);
-        MakeButtonWithHelp(body, "Button_ExportUnityPkg",  ".unitypackage",       "colunitypkg", bx + 1f * (bw2 + gap), y, bw2, 28f);
+        float cbw3 = (bw - 2f * gap) / 3f;
+        MakeButtonWithHelp(body, "Button_ExportColliders", "Export Colliders", "colsidecar", bx + 0f * (cbw3 + gap), y, cbw3, 28f);
+        MakeButtonWithHelp(body, "Button_ImportColliders", "Import Colliders", "colimport",  bx + 1f * (cbw3 + gap), y, cbw3, 28f);
+        MakeButtonWithHelp(body, "Button_ExportUnityPkg",  ".unitypackage",    "colunitypkg", bx + 2f * (cbw3 + gap), y, cbw3, 28f);
+        y += 32f;
+
+        float chw = (bw - gap) * 0.5f;
+        MakeButton(body, "Button_ShowColliders", "Show Colliders", bx, y, chw, 28f);
+        MakeButton(body, "Button_EditColliders", "Edit Colliders", bx + chw + gap, y, chw, 28f);
         y += 36f;
 
         // ---- export row ----
-        MakeText(body, "Lbl_Export", "Export", bx, y, bw - 20f, 20f, 12, TextAnchor.MiddleLeft, FontStyle.Bold);
+        MakeText(body, "Hdr_Export", "Export", bx, y, bw - 20f, 20f, 12, TextAnchor.MiddleLeft, FontStyle.Bold);
         MakeHelp(body, "export", bx + bw - 16f, y + 2f);
         y += 24f;
         MakeButton(body, "Button_ExportVrm0", "VRM 0.x",  bx + 0f * (bw3 + gap), y, bw3, 30f);
@@ -295,10 +325,90 @@ public static class WeightStudioBuild
         tip.horizontalOverflow = HorizontalWrapMode.Wrap;
         tip.verticalOverflow = VerticalWrapMode.Truncate;
 
-        // ---- pinned close ----
-        MakeButton(root.transform, "Button_Close", "Close", contentX, footY + tipH + 8f, contentW, closeH);
+        // ---- pinned save + close ----
+        float pinHw = (contentW - 8f) * 0.5f;
+        MakeButton(root.transform, "Button_SaveAll", "Save Settings", contentX, footY + tipH + 8f, pinHw, closeH);
+        MakeButton(root.transform, "Button_Close", "Close", contentX + pinHw + 8f, footY + tipH + 8f, pinHw, closeH);
 
         rrt.sizeDelta = new Vector2(W, WH);
+
+        GameObject asset = PrefabUtility.SaveAsPrefabAsset(root, prefabPath);
+        Object.DestroyImmediate(root);
+        AssetDatabase.SaveAssets();
+        AssetDatabase.Refresh();
+        return asset;
+    }
+
+    // ---- Collider Editor window ----
+    // Control-name contract with ColliderEditorPanel.cs:
+    //   Label_ColEdStatus, Toggle_ColEdPick, ColEdContent (scroll list), Label_ColEdSel,
+    //   Slider_/Value_ ced{radius,len,posx,posy,posz,rotx,roty,rotz},
+    //   Button_ColEd{Type,Dup,Del,Add,Close}
+    static GameObject BuildColliderEditorPrefab(string prefabPath)
+    {
+        const float W = 440f;
+        const float P = 12f;
+        const float contentW = W - 2f * P;
+        const float gap = 8f;
+
+        GameObject root = new GameObject("ColliderEditorWindow",
+            typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+        RectTransform rrt = root.GetComponent<RectTransform>();
+        rrt.anchorMin = new Vector2(0.5f, 0.5f);
+        rrt.anchorMax = new Vector2(0.5f, 0.5f);
+        rrt.pivot = new Vector2(0.5f, 0.5f);
+        Image bg = root.GetComponent<Image>();
+        bg.sprite = _res.background;
+        bg.type = Image.Type.Sliced;
+        bg.color = new Color(0.13f, 0.13f, 0.15f, 0.96f);
+        root.AddComponent<VNyanWeightStudio.WindowDrag>();
+
+        float y = 10f;
+
+        MakeText(root.transform, "Title", "Collider Editor",
+            P, y, contentW, 22f, 15, TextAnchor.MiddleCenter, FontStyle.Bold);
+        y += 26f;
+
+        MakeText(root.transform, "Label_ColEdStatus", "open via Edit Colliders",
+            P, y, contentW, 18f, 11, TextAnchor.MiddleLeft, FontStyle.Italic);
+        y += 22f;
+
+        MakeToggle(root.transform, "Toggle_ColEdPick", "Pick in 3D view (click a collider on the model)",
+            P, y, contentW, 22f);
+        y += 26f;
+
+        MakeScroll(root.transform, "ColEdScrollView", "ColEdContent", P, y, contentW, 150f, true);
+        y += 154f;
+
+        MakeText(root.transform, "Label_ColEdSel", "nothing selected",
+            P, y, contentW, 18f, 11, TextAnchor.MiddleLeft, FontStyle.Normal);
+        y += 22f;
+
+        SliderRow(root.transform, "cedradius", "Radius",   0.005f, 0.4f, false, 0.05f, "0.000", P, contentW, y, false); y += 30f;
+        SliderRow(root.transform, "cedlen",    "Length",   0f,     0.6f, false, 0f,    "0.000", P, contentW, y, false); y += 30f;
+        SliderRow(root.transform, "cedposx",   "Offset X", -0.3f,  0.3f, false, 0f,    "0.000", P, contentW, y, false); y += 30f;
+        SliderRow(root.transform, "cedposy",   "Offset Y", -0.3f,  0.3f, false, 0f,    "0.000", P, contentW, y, false); y += 30f;
+        SliderRow(root.transform, "cedposz",   "Offset Z", -0.3f,  0.3f, false, 0f,    "0.000", P, contentW, y, false); y += 30f;
+        SliderRow(root.transform, "cedrotx",   "Rotate X", -180f,  180f, false, 0f,    "0",     P, contentW, y, false); y += 30f;
+        SliderRow(root.transform, "cedroty",   "Rotate Y", -180f,  180f, false, 0f,    "0",     P, contentW, y, false); y += 30f;
+        SliderRow(root.transform, "cedrotz",   "Rotate Z", -180f,  180f, false, 0f,    "0",     P, contentW, y, false); y += 34f;
+
+        float bw3 = (contentW - 2f * gap) / 3f;
+        MakeButton(root.transform, "Button_ColEdType", "Sphere <-> Capsule", P + 0f * (bw3 + gap), y, bw3, 28f);
+        MakeButton(root.transform, "Button_ColEdDup",  "Duplicate",          P + 1f * (bw3 + gap), y, bw3, 28f);
+        MakeButton(root.transform, "Button_ColEdDel",  "Delete",             P + 2f * (bw3 + gap), y, bw3, 28f);
+        y += 34f;
+
+        float hw = (contentW - gap) * 0.5f;
+        MakeButton(root.transform, "Button_ColEdUndo", "Undo", P, y, hw, 28f);
+        MakeButton(root.transform, "Button_ColEdRedo", "Redo", P + hw + gap, y, hw, 28f);
+        y += 34f;
+
+        MakeButton(root.transform, "Button_ColEdAdd",   "Add on Active Bone", P, y, hw, 28f);
+        MakeButton(root.transform, "Button_ColEdClose", "Close",              P + hw + gap, y, hw, 28f);
+        y += 28f + P;
+
+        rrt.sizeDelta = new Vector2(W, y);
 
         GameObject asset = PrefabUtility.SaveAsPrefabAsset(root, prefabPath);
         Object.DestroyImmediate(root);

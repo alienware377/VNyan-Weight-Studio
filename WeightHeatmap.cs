@@ -6,8 +6,8 @@ namespace VNyanWeightStudio
     /// Live weight-paint heatmap overlay, à la Blender's weight-paint mode.
     ///
     /// Spawns a second SkinnedMeshRenderer that SHARES the model's working mesh,
-    /// bones, bindposes and rootBone — so it deforms pixel-for-pixel on top of the
-    /// real avatar — but draws with an unlit, transparent vertex-colour material.
+    /// bones, bindposes and rootBone, so it deforms pixel-for-pixel on top of the
+    /// real avatar, but draws with an unlit, transparent vertex-colour material.
     /// Each vertex is tinted by the ACTIVE bone's weight using the classic
     /// blue(0) -> cyan -> green -> yellow -> red(1) ramp.
     ///
@@ -29,6 +29,7 @@ namespace VNyanWeightStudio
         bool hadColors;
 
         public bool Enabled { get; private set; }
+        public SkinnedMeshRenderer OverlayRenderer { get { return overlay; } }
         float opacity = 0.75f;
         int activeBone = -1;
 
@@ -107,6 +108,26 @@ namespace VNyanWeightStudio
             var mats = new Material[sub];
             for (int i = 0; i < sub; i++) mats[i] = mat;
             overlay.sharedMaterials = mats;
+            SyncBlendShapes(LiveShapes.Get(baseRenderer));
+        }
+
+        /// <summary>
+        /// Copies shape-key weights onto the overlay (a second renderer starts with all of them
+        /// at 0, so it showed the bare shape, hidden inside a body/outfit enlarged by shape keys).
+        /// Pass the weights captured at the END of the frame: VNyan zeroes them mid-frame and
+        /// sets them again after the plugins' LateUpdate. Nobody else writes the overlay's
+        /// weights, so they hold until the next capture. Null = read the base renderer now.
+        /// </summary>
+        public void SyncBlendShapes(float[] live)
+        {
+            if (overlay == null || baseRenderer == null || mesh == null) return;
+            int n = mesh.blendShapeCount;
+            bool useLive = live != null && live.Length == n;
+            for (int i = 0; i < n; i++)
+            {
+                float w = useLive ? live[i] : baseRenderer.GetBlendShapeWeight(i);
+                if (overlay.GetBlendShapeWeight(i) != w) overlay.SetBlendShapeWeight(i, w);
+            }
         }
 
         /// <summary>Recompute per-vertex colours from the active bone's weights.</summary>

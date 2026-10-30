@@ -24,9 +24,14 @@ namespace VNyanWeightStudio
     /// The window prefab is built by WeightStudioBuild.cs (Editor) and shipped as a
     /// .vnobj AssetBundle; this script wires it up by control name at runtime.
     /// </summary>
-    public class BoneWeightStudioPlugin : MonoBehaviour, VNyanInterface.IButtonClickedHandler
+    public partial class BoneWeightStudioPlugin : MonoBehaviour, VNyanInterface.IButtonClickedHandler
     {
+        public const string VERSION = "v1.1.0";
+        // GitHub repo the update check reads (the check stays quiet while there are no releases)
+        public const string REPO = "alienware377/VNyan-Weight-Studio";
+
         public GameObject windowPrefab;
+        public GameObject colliderEditorPrefab;   // second window, built by WeightStudioBuild
 
         GameObject window;
         Text statusText;
@@ -56,6 +61,13 @@ namespace VNyanWeightStudio
         bool includeColliders = true;     // embed generated colliders in VBX/VRM exports
         Text colliderLabel;
 
+        // collider visualization
+        bool showColliders;
+        Material glMat;
+        Text showCollidersText;
+        Transform colliderAvatarRoot;
+        Dictionary<string, Transform> colliderBoneCache;
+
         // tappable tooltips
         Text tipText;
 
@@ -81,6 +93,7 @@ namespace VNyanWeightStudio
             VNyanInterface.VNyanInterface.VNyanUI.registerPluginButton("Weight Studio", this);
             window = (GameObject)VNyanInterface.VNyanInterface.VNyanUI.instantiateUIPrefab(windowPrefab);
             uiFont = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            CreateGLMat();
 
             LoadSettings();
 
@@ -90,7 +103,12 @@ namespace VNyanWeightStudio
                 window.SetActive(false);
                 WireUI();
                 SetStatus("Load an avatar, pick a mesh + bone, enable Paint.");
+                // update badge sits straight left of the X (x 304..416 of 460); the centred
+                // "Weight Studio" title glyphs end near x 280, so nothing has to move
+                PluginChrome.CheckForUpdate(this, window.GetComponent<RectTransform>(), REPO, VERSION, "[WeightStudio] ", uiFont, 0f);
             }
+
+            ColEdInit();
         }
 
         public void pluginButtonClicked()
@@ -101,6 +119,7 @@ namespace VNyanWeightStudio
             {
                 window.transform.SetAsLastSibling();
                 RebuildMeshList();
+                lastConflictCheck = -10f;   // check other plugins straight away
             }
         }
 
@@ -143,6 +162,22 @@ namespace VNyanWeightStudio
             BindButton("Button_ExportVbxFile", ExportVbxFromFile);   // standalone, from a .vsfavatar on disk
 
             BindButton("Button_Close", () => { if (window != null) window.SetActive(false); });
+            BindButton("Button_SaveAll", () =>
+            {
+                SaveSettings();
+                ReloadHiddenIfChanged();   // merge on top of other plugins' latest edits
+                // snapshot: shown meshes leave the list; hidden ones are added ONLY if
+                // the user toggled them here; a mesh hidden by a sim/proxy or another
+                // plugin must not sneak into the shared list.
+                foreach (var smr in meshes)
+                {
+                    if (smr == null) continue;
+                    if (smr.enabled) hiddenMeshes.Remove(smr.name);
+                    else if (wsToggled.Contains(smr.name)) hiddenMeshes.Add(smr.name);
+                }
+                SaveHiddenMeshes();
+                SetStatus("Saved. Sliders, toggles and the current shown/hidden state persist across restarts.");
+            });
 
             meshContent = Find<RectTransform>("MeshContent");
             boneContent = Find<RectTransform>("BoneContent");
@@ -170,9 +205,12 @@ namespace VNyanWeightStudio
             BindToggle("Toggle_xfernorm", xfer.normalize, v => xfer.normalize = v);
             BindButton("Button_Transfer", DoTransfer);
 
+            // ---- mirror weights ----
+            WireMirrorUI();
+
             // ---- auto-fit colliders ----
             colliderLabel = Find<Text>("Label_Colliders");
-            BindSliderFloat("Slider_colradius", "Value_colradius", genCfg.radiusScale, 0.3f, 2.5f, v => genCfg.radiusScale = v, "0.00");
+            BindSliderFloat("Slider_colradius", "Value_colradius", genCfg.radiusScale, 0.05f, 2.5f, v => genCfg.radiusScale = v, "0.00");
             BindSliderFloat("Slider_colminw", "Value_colminw", genCfg.minWeight, 0.1f, 0.95f, v => genCfg.minWeight = v, "0.00");
             BindSliderInt("Slider_colminv", "Value_colminv", genCfg.minVerts, 4, 64, v => genCfg.minVerts = v);
             BindToggle("Toggle_colcaps", genCfg.capsules, v => genCfg.capsules = v);
@@ -181,10 +219,21 @@ namespace VNyanWeightStudio
             BindToggle("Toggle_colembed", includeColliders, v => includeColliders = v);
             BindButton("Button_GenColliders", GenerateColliders);
             BindButton("Button_ExportColliders", ExportColliderSidecars);
+            BindButton("Button_ImportColliders", ImportColliders);
             BindButton("Button_ExportUnityPkg", ExportUnityPackage);
+            Button scBtn = Find<Button>("Button_ShowColliders");
+            if (scBtn != null) { scBtn.onClick.AddListener(OnToggleColliders); showCollidersText = scBtn.GetComponentInChildren<Text>(); }
+            BindButton("Button_EditColliders", ColEdToggle);
 
             // ---- tappable tooltips ----
             BindAllHelp();
+            BuildSections();
+
+            // ---- window chrome: the shared X at the top-right closes the window (same as the
+            // old bottom Close, which is hidden; Save Settings takes the whole bottom row) ----
+            RectTransform winRt = window.GetComponent<RectTransform>();
+            PluginChrome.EnsureCloseX(winRt, () => { if (window != null) window.SetActive(false); }, uiFont);
+            PluginChrome.HideOtherClose(winRt, "Button_Close");
 
             UpdateBrushLabel();
             UpdateSourceLabel();
@@ -210,7 +259,7 @@ namespace VNyanWeightStudio
             heatmap.SetOpacity(heatOpacity);
             heatmap.SetEnabled(on);
             SetStatus(on
-                ? "Heatmap ON — blue=0, green=0.5, red=1 for the active bone. Fade with opacity."
+                ? "Heatmap ON: blue=0, green=0.5, red=1 for the active bone. Fade with opacity."
                 : "Heatmap off.");
         }
 
@@ -227,14 +276,14 @@ namespace VNyanWeightStudio
         void UpdateSourceLabel()
         {
             if (sourceLabel == null) return;
-            sourceLabel.text = "Source: " + (transferSource != null ? transferSource.name : "(none — pick a mesh, Set Source)");
+            sourceLabel.text = "Source: " + (transferSource != null ? transferSource.name : "(none: pick a mesh, Set Source)");
         }
 
         void DoTransfer()
         {
             if (model == null) { SetStatus("No target mesh loaded."); return; }
-            if (transferSource == null) { SetStatus("No source set — select a mesh and click Set Source."); return; }
-            if (transferSource == activeRenderer) { SetStatus("Source and target are the same mesh — pick a different target."); return; }
+            if (transferSource == null) { SetStatus("No source set. Select a mesh and click Set Source."); return; }
+            if (transferSource == activeRenderer) { SetStatus("Source and target are the same mesh. Pick a different target."); return; }
 
             model.PushUndo();
             var r = WeightTransfer.Transfer(model, transferSource, xfer, selectionMask);
@@ -252,7 +301,7 @@ namespace VNyanWeightStudio
             int n = genColliders != null ? genColliders.Count : 0;
             colliderLabel.text = n > 0
                 ? "Colliders: " + n + " fitted" + (includeColliders ? " (embedded in exports)" : " (export disabled)")
-                : "Colliders: none — click Generate";
+                : "Colliders: none (click Generate)";
         }
 
         void GenerateColliders()
@@ -261,16 +310,31 @@ namespace VNyanWeightStudio
 
             Transform root;
             var renderers = GatherAvatarRenderers(out root);
-            if (renderers.Count == 0) { SetStatus("No avatar meshes — load a model and Rescan first."); return; }
+            if (renderers.Count == 0) { SetStatus("No avatar meshes. Load a model and Rescan first."); return; }
 
             Animator anim = root != null ? root.GetComponentInChildren<Animator>() : null;
 
-            var res = ColliderGen.Generate(renderers, anim, genCfg);
-            genColliders = res.colliders;
-            UpdateColliderLabel();
-            SetStatus(genColliders.Count > 0
-                ? "Fitted " + res.message + ". Export VBX/VRM embeds them; or use Export Colliders / Unity Package."
-                : "No colliders fitted — lower 'Min verts' or 'Min weight', or check the mesh is readable.");
+            try
+            {
+                var res = ColliderGen.Generate(renderers, anim, genCfg);
+                ColEdPushUndo();   // a regenerate is undoable in the collider editor
+                genColliders = res.colliders;
+                colliderAvatarRoot = root;
+                RebuildColliderBoneCache();
+                UpdateColliderLabel();
+                ColEdOnCollidersChanged();
+                Debug.Log("[WeightStudio] GenerateColliders: renderers=" + renderers.Count
+                    + " root=" + (root != null ? root.name : "null")
+                    + " fitted=" + (genColliders != null ? genColliders.Count : 0));
+                SetStatus(genColliders.Count > 0
+                    ? "Fitted " + res.message + ". Export VBX/VRM embeds them; or use Export Colliders / Unity Package."
+                    : "No colliders fitted. Lower 'Min verts' or 'Min weight', or check the mesh is readable.");
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogError("[WeightStudio] GenerateColliders failed: " + e);
+                SetStatus("Generate colliders failed (see log): " + e.Message);
+            }
         }
 
         // base file name + ensured output dir, shared by every export
@@ -290,9 +354,23 @@ namespace VNyanWeightStudio
             try
             {
                 string dir; string baseName = ExportBaseName(out dir);
-                var files = CollidersExport.WriteAll(Path.Combine(dir, baseName), genColliders);
-                Debug.Log("[WeightStudio] Collider sidecars: " + string.Join(", ", files.ToArray()));
-                SetStatus("Wrote " + files.Count + " collider configs (PhysBones/Jiggle/VRChat/DynamicBone) -> " + dir);
+                string chosen = NativeFileDialog.SaveFile(
+                    "Export Colliders: pick a base name (4 files are written next to it)",
+                    dir, baseName + ".json", "Collider configs (*.json)", "*.json", "json");
+                if (string.IsNullOrEmpty(chosen)) { SetStatus("Export cancelled."); return; }
+
+                // strip .json (and a known double suffix if the user picked an existing file)
+                string baseNoExt = chosen;
+                if (baseNoExt.EndsWith(".json", StringComparison.OrdinalIgnoreCase))
+                    baseNoExt = baseNoExt.Substring(0, baseNoExt.Length - 5);
+                foreach (string sfx in new[] { ".physbones", ".jigglephysics", ".vrcphysbones", ".dynamicbone" })
+                    if (baseNoExt.EndsWith(sfx, StringComparison.OrdinalIgnoreCase))
+                    { baseNoExt = baseNoExt.Substring(0, baseNoExt.Length - sfx.Length); break; }
+
+                var files = CollidersExport.WriteAll(baseNoExt, genColliders);
+                Debug.Log("[WeightStudio] Collider configs: " + string.Join(", ", files.ToArray()));
+                SetStatus("Wrote " + files.Count + " collider configs (PhysBones/Jiggle/VRChat/DynamicBone) -> "
+                    + Path.GetDirectoryName(baseNoExt));
             }
             catch (Exception e)
             {
@@ -301,12 +379,63 @@ namespace VNyanWeightStudio
             }
         }
 
+        void ImportColliders()
+        {
+            try
+            {
+                string dir = Path.Combine(Application.persistentDataPath, "WeightStudio");
+                string chosen = NativeFileDialog.OpenFile(
+                    "Import Colliders: any exported collider config",
+                    Directory.Exists(dir) ? dir : Application.persistentDataPath,
+                    "Collider configs (*.json)", "*.json");
+                if (string.IsNullOrEmpty(chosen)) { SetStatus("Import cancelled."); return; }
+
+                string format;
+                var loaded = ColliderImport.Load(chosen, out format);
+                if (loaded.Count == 0) { SetStatus("No colliders found in " + Path.GetFileName(chosen) + " (" + format + ")."); return; }
+
+                ColEdEnsureData();
+                ColEdPushUndo();
+
+                // merge: same name replaces, new names append
+                var index = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+                for (int i = 0; i < genColliders.Count; i++)
+                    if (!string.IsNullOrEmpty(genColliders[i].name)) index[genColliders[i].name] = i;
+
+                int added = 0, replaced = 0;
+                foreach (var c in loaded)
+                {
+                    int at;
+                    if (!string.IsNullOrEmpty(c.name) && index.TryGetValue(c.name, out at))
+                    { genColliders[at] = c; replaced++; }
+                    else
+                    {
+                        genColliders.Add(c);
+                        if (!string.IsNullOrEmpty(c.name)) index[c.name] = genColliders.Count - 1;
+                        added++;
+                    }
+                }
+
+                UpdateColliderLabel();
+                ColEdOnCollidersChanged();
+                if (!showColliders) OnToggleColliders();   // show what just came in
+                SetStatus("Imported " + added + " new collider(s)" +
+                    (replaced > 0 ? " (" + replaced + " replaced)" : "") +
+                    " from " + Path.GetFileName(chosen) + " [" + format + "]");
+            }
+            catch (Exception e)
+            {
+                Debug.LogError("[WeightStudio] Collider import failed: " + e);
+                SetStatus("Collider import failed (see log): " + e.Message);
+            }
+        }
+
         void ExportUnityPackage()
         {
             if (model != null && model.dirty) model.ApplyToMesh();
 
             // gather the CHOSEN avatar's meshes (same scoping as Export) so we embed
-            // exactly one copy of the model — not other avatars / a Pose Studio copy.
+            // exactly one copy of the model, not other avatars / a Pose Studio copy.
             Transform root;
             var renderers = GatherAvatarRenderers(out root);
 
@@ -336,7 +465,7 @@ namespace VNyanWeightStudio
                 Debug.Log("[WeightStudio] Unity package: " + path);
                 SetStatus(vbxAssetName != null
                     ? "Exported Unity package (model + .vbx importer, unlimited skin weights) -> " + path
-                    : "Exported Unity addon package (scripts only — no avatar selected) -> " + path);
+                    : "Exported Unity addon package (scripts only, no avatar selected) -> " + path);
             }
             catch (Exception e)
             {
@@ -397,27 +526,56 @@ namespace VNyanWeightStudio
                 ["xfersamples"] = "Smooth mapping only: how many nearby source points to average. More = smoother, less detail.",
                 ["xfermaxdist"] = "Ignore source points farther than this (metres). 0 = no limit. Stops weights leaking from the wrong body part.",
                 ["xferblend"] = "How much copied weight to apply. 1 = fully replace the target; 0.5 = mix half-and-half with what's there.",
-                ["xfermatch"] = "Match bones by NAME between the two models (recommended). Off = match by bone order — only safe for identical skeletons.",
+                ["xfermatch"] = "Match bones by NAME between the two models (recommended). Off = match by bone order, only safe for identical skeletons.",
                 ["xfersel"] = "Only change the Shift-painted selection instead of the whole mesh.",
                 ["xfernorm"] = "Make each point's weights total 1 after transfer (recommended; prevents distortion).",
                 ["xfergo"] = "Copy weights from the Source mesh onto the selected (target) mesh using the settings above.",
+                ["mirror"] = "Copy weights across the mirror axis. Bone -> Opposite copies the active bone's weights onto its L/R partner. Self copies one side of the active bone onto its own other side.",
+                ["mirproj"] = "OFF: match exact mirrored verts using the model's default (bind) pose. ON: project onto the CURRENT pose. For projection, pose must be symmetric, held still, nothing clipping together, no live tracking.",
+                ["mirmix"] = "How much of the mirrored value to take. 0% = keep what's there, 100% = fully replace the target side/bone.",
                 ["colgen"] = "Auto-fit a collider to each bone, hugging the parts of the mesh that bone controls. Capsules for long bones, spheres for round ones.",
                 ["colradius"] = "Scales every fitted collider's thickness. 1 = snug to the mesh; higher = puffier; lower = tighter inside.",
                 ["colminw"] = "A vertex counts toward a bone only if that bone is at least this much of its weight. Higher = tighter, cleaner fits.",
                 ["colminv"] = "Skip bones controlling fewer vertices than this. Raises to drop tiny noisy colliders; lower to cover small parts.",
                 ["colcaps"] = "Allow capsule (pill) shapes for long bones like arms and legs. Off = spheres only.",
-                ["colfingers"] = "Skip the small finger and toe bones — they rarely need colliders and just add clutter.",
+                ["colfingers"] = "Skip the small finger and toe bones. They rarely need colliders and just add clutter.",
                 ["colhuman"] = "Only fit colliders on standard humanoid bones (needs a humanoid rig). Off = every skinning bone.",
                 ["colembed"] = "Bake the fitted colliders into the VBX / VRM files you export, so spring-bones collide with the body.",
-                ["colsidecar"] = "Save the colliders as JSON for PhysBones, Jiggle, VRChat PhysBones and DynamicBone — drop them into those systems.",
+                ["colsidecar"] = "Save the colliders as JSON for PhysBones, Jiggle, VRChat PhysBones and DynamicBone. You pick where; 4 files are written.",
+                ["colimport"] = "Load colliders back from ANY exported collider config (PhysBones / Jiggle / VRChat / DynamicBone JSON). Same names get replaced.",
                 ["colunitypkg"] = "Export a .unitypackage with Unity 2019.4 / 2022.3 scripts (collider + spring-bone + importer) plus a ready-made collider config.",
             };
         }
 
         // ------------------------------------------------------------ paint loop
 
+        float lastHiddenApply = -999f;
+
+        // Re-hide saved hidden meshes even when our window is closed, so the state
+        // survives restarts and avatar reloads without opening Weight Studio.
+        void ApplyHiddenMeshes()
+        {
+            if (!hiddenLoaded) LoadHiddenMeshes();
+            else ReloadHiddenIfChanged();
+            if (hiddenMeshes.Count == 0) return;
+            foreach (var smr in FindObjectsOfType<SkinnedMeshRenderer>())
+                if (smr != null && smr.enabled && hiddenMeshes.Contains(smr.name))
+                    smr.enabled = false;
+        }
+
         void Update()
         {
+            if (Time.unscaledTime - lastHiddenApply > 2f)
+            {
+                lastHiddenApply = Time.unscaledTime;
+                ApplyHiddenMeshes();
+            }
+            ShapeCaptureTick();     // end-of-frame shape keys (VNyan zeroes them mid-frame)
+            CheckConflictsTick();   // soft-body / weight plugins changing the avatar under us
+            ProbeTick();            // developer self-test, only when its trigger file exists
+
+            if (ColEdUpdate()) return;   // 3D-view collider picking eats the click
+
             if (window == null || !window.activeSelf) return;
             if (!paintMode || model == null || !model.Loaded) return;
             if (!Input.GetMouseButton(0)) return;
@@ -471,7 +629,7 @@ namespace VNyanWeightStudio
                 pickCollider = pickGO.AddComponent<MeshCollider>();
             }
             if (pickBake == null) pickBake = new Mesh();
-            activeRenderer.BakeMesh(pickBake, true);
+            LiveShapes.Bake(activeRenderer, pickBake);   // the surface you see, shape keys included
             pickGO.transform.SetParent(activeRenderer.transform, false);
             pickGO.transform.localPosition = Vector3.zero;
             pickGO.transform.localRotation = Quaternion.identity;
@@ -506,8 +664,71 @@ namespace VNyanWeightStudio
 
         // ------------------------------------------------------------ mesh / bone lists
 
+        // meshes hidden via OUR shown/hidden buttons, persisted across sessions. Only
+        // names in this set are ever re-hidden; meshes other plugins disable are ignored.
+        readonly HashSet<string> hiddenMeshes = new HashSet<string>();
+        readonly HashSet<string> wsToggled = new HashSet<string>();   // meshes the user clicked in OUR list this session
+        bool hiddenLoaded;
+
+        // Root AppData so every plugin can share it even when installed alone.
+        // Migrates the old WeightStudio\hidden_meshes.txt copy once if present.
+        string HiddenMeshPath()
+        {
+            string p = Path.Combine(Application.persistentDataPath, "hidden_meshes.txt");
+            try
+            {
+                string old = Path.Combine(Path.Combine(Application.persistentDataPath, "WeightStudio"), "hidden_meshes.txt");
+                if (!File.Exists(p) && File.Exists(old)) File.Copy(old, p);
+            }
+            catch { }
+            return p;
+        }
+
+        // The file is SHARED with the soft-body studios (Jello etc.): they read and
+        // write the same list, so track its timestamp and reload when someone else
+        // changes it, or our stale copy would clobber their edits on the next save.
+        DateTime hiddenStamp;
+
+        void LoadHiddenMeshes()
+        {
+            hiddenLoaded = true;
+            try
+            {
+                string p = HiddenMeshPath();
+                hiddenMeshes.Clear();
+                if (!File.Exists(p)) return;
+                foreach (string line in File.ReadAllLines(p))
+                    if (!string.IsNullOrEmpty(line.Trim())) hiddenMeshes.Add(line.Trim());
+                hiddenStamp = File.GetLastWriteTimeUtc(p);
+            }
+            catch (Exception e) { Debug.LogWarning("[WeightStudio] hidden-mesh load failed: " + e.Message); }
+        }
+
+        void SaveHiddenMeshes()
+        {
+            try
+            {
+                string[] arr = new string[hiddenMeshes.Count];
+                hiddenMeshes.CopyTo(arr);
+                File.WriteAllLines(HiddenMeshPath(), arr);
+                hiddenStamp = File.GetLastWriteTimeUtc(HiddenMeshPath());
+            }
+            catch (Exception e) { Debug.LogWarning("[WeightStudio] hidden-mesh save failed: " + e.Message); }
+        }
+
+        void ReloadHiddenIfChanged()
+        {
+            try
+            {
+                string p = HiddenMeshPath();
+                if (File.Exists(p) && File.GetLastWriteTimeUtc(p) != hiddenStamp) LoadHiddenMeshes();
+            }
+            catch { }
+        }
+
         void RebuildMeshList()
         {
+            if (!hiddenLoaded) LoadHiddenMeshes();
             meshes.Clear();
             var renderers = FindObjectsOfType<SkinnedMeshRenderer>();
             Array.Sort(renderers, (a, b) => string.Compare(a ? a.name : "", b ? b.name : "", StringComparison.OrdinalIgnoreCase));
@@ -515,6 +736,7 @@ namespace VNyanWeightStudio
             {
                 if (smr == null || smr.sharedMesh == null) continue;
                 if (smr.bones == null || smr.bones.Length < 2) continue;
+                if (hiddenMeshes.Contains(smr.name) && smr.enabled) smr.enabled = false;   // restore saved hide state
                 meshes.Add(smr);
             }
 
@@ -532,7 +754,7 @@ namespace VNyanWeightStudio
                 AddVisibilityButton(row, captured);
                 y += rowH;
             }
-            if (meshes.Count == 0) MakeInfo(meshContent, "(no skinned meshes — load an avatar, then Rescan)", y, rowH);
+            if (meshes.Count == 0) MakeInfo(meshContent, "(no skinned meshes: load an avatar, then Rescan)", y, rowH);
             meshContent.sizeDelta = new Vector2(0f, Mathf.Max(y, 1f));
 
             if (activeRenderer == null && meshes.Count > 0) SelectMesh(meshes[0]);
@@ -582,7 +804,7 @@ namespace VNyanWeightStudio
         {
             if (model == null) { SetStatus("No mesh loaded."); return; }
             bool[] mask = selectionOnly ? selectionMask : null;
-            if (selectionOnly && (mask == null || CountSelection() == 0)) { SetStatus("No selection — paint one with 'Select' first."); return; }
+            if (selectionOnly && (mask == null || CountSelection() == 0)) { SetStatus("No selection. Paint one with 'Select' first."); return; }
             model.PushUndo();
             var r = WeightTools.SmoothMesh(model, smooth, mask);
             model.ApplyToMesh();
@@ -595,7 +817,7 @@ namespace VNyanWeightStudio
             if (model == null) { SetStatus("No mesh loaded."); return; }
             if (brush.activeBone < 0) { SetStatus("No active bone selected."); return; }
             bool[] mask = selectionOnly ? selectionMask : null;
-            if (selectionOnly && (mask == null || CountSelection() == 0)) { SetStatus("No selection — paint one with 'Select' first."); return; }
+            if (selectionOnly && (mask == null || CountSelection() == 0)) { SetStatus("No selection. Paint one with 'Select' first."); return; }
             model.PushUndo();
             var r = WeightTools.SmoothBone(model, brush.activeBone, smooth, mask);
             model.ApplyToMesh();
@@ -654,11 +876,11 @@ namespace VNyanWeightStudio
         {
             if (model != null && model.dirty) model.ApplyToMesh();
 
-            // gather all meshes of the CHOSEN avatar (not every SMR in the scene — other
+            // gather all meshes of the CHOSEN avatar (not every SMR in the scene: other
             // avatars / a Pose Studio copy / our heatmap overlay would otherwise duplicate).
             Transform root;
             var renderers = GatherAvatarRenderers(out root);
-            if (renderers.Count == 0) { SetStatus("No avatar meshes to export — select a mesh first."); return; }
+            if (renderers.Count == 0) { SetStatus("No avatar meshes to export. Select a mesh first."); return; }
 
             Animator anim = root != null ? root.GetComponentInChildren<Animator>() : null;
 
@@ -720,10 +942,30 @@ namespace VNyanWeightStudio
 
         // ------------------------------------------------ standalone export from a .vsfavatar
         // Reads an avatar straight out of a .vsfavatar file (a Unity AssetBundle) and
-        // writes a fully self-contained .vbx — no need for the avatar to be loaded in
+        // writes a fully self-contained .vbx, no need for the avatar to be loaded in
         // VNyan, and nothing is left in the live scene afterwards. Triggered by the
         // "Button_ExportVbxFile" UI button if present, or Ctrl+Shift+E while the window
         // is open.
+        // Optional hand-off to the separate Material Studio plugin (no reference to it: found
+        // by name at runtime). Returns how many materials it changed, or -1 when it is not
+        // installed or has no saved edits for this model.
+        static int ApplyMaterialStudioEdits(GameObject avatar, string sourceFile)
+        {
+            try
+            {
+                foreach (var asm in AppDomain.CurrentDomain.GetAssemblies())
+                {
+                    Type t = asm.GetType("MaterialStudio.MaterialStudioPlugin", false);
+                    if (t == null) continue;
+                    var mi = t.GetMethod("ApplyRecipeTo", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
+                    if (mi == null) return -1;
+                    return (int)mi.Invoke(null, new object[] { avatar, sourceFile });
+                }
+            }
+            catch (Exception e) { Debug.LogWarning("[WeightStudio] Material Studio edits not applied: " + e.Message); }
+            return -1;
+        }
+
         void ExportVbxFromFile()
         {
             string startDir = Path.Combine(Application.persistentDataPath, "WeightStudio");
@@ -772,6 +1014,11 @@ namespace VNyanWeightStudio
                 // not passed here (they were fitted for the live avatar, not this file).
                 // Embed the source .vsfavatar bytes so the Reader can recover the REAL
                 // compiled materials (locked Poiyomi, etc.) on a standalone load.
+                // Live material edits from Material Studio (when it is installed) go onto this
+                // copy too, so the standalone .vbx matches what VNyan shows.
+                int msApplied = ApplyMaterialStudioEdits(loaded.instance, vsf);
+                if (msApplied > 0) Debug.Log("[WeightStudio] Material Studio edits applied to " + msApplied + " material(s).");
+
                 VbxExporter.Export(chosen, root, renderers, anim, null, vsf);
 
                 int unreadable = 0;
@@ -1009,8 +1256,8 @@ namespace VNyanWeightStudio
         }
 
         // Collect ONLY the skinned meshes that belong to the single chosen avatar.
-        // FindObjectsOfType grabs every SMR in the scene — other avatars, a Pose Studio
-        // copy, and our own heatmap overlay — which would duplicate meshes in an export.
+        // FindObjectsOfType grabs every SMR in the scene: other avatars, a Pose Studio
+        // copy, and our own heatmap overlay, which would duplicate meshes in an export.
         // Seed from the active/first mesh, find its avatar root, then keep just the
         // renderers parented under that root, skipping WeightStudio's helper overlays.
         List<SkinnedMeshRenderer> GatherAvatarRenderers(out Transform root)
@@ -1151,6 +1398,10 @@ namespace VNyanWeightStudio
             {
                 if (smr == null) return;
                 smr.enabled = !smr.enabled;
+                wsToggled.Add(smr.name);
+                ReloadHiddenIfChanged();   // don't clobber other plugins' edits
+                if (smr.enabled) hiddenMeshes.Remove(smr.name); else hiddenMeshes.Add(smr.name);
+                SaveHiddenMeshes();
                 refresh();
                 SetStatus((smr.enabled ? "Showing '" : "Hidden '") + smr.name + "'.");
             });
@@ -1189,6 +1440,8 @@ namespace VNyanWeightStudio
         // Hold Left-Shift to paint a SELECTION instead of weights (for 'Smooth Selection').
         void LateUpdate()
         {
+            PhaseNote("WS LateUpdate");
+
             bool wantSel = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
             if (wantSel != buildingSelection)
             {
@@ -1213,7 +1466,10 @@ namespace VNyanWeightStudio
                 {
                     ExportVbxFromFile();   // build a standalone VBX from a .vsfavatar file
                 }
-                else if (model != null && ctrl && Input.GetKeyDown(KeyCode.Z))
+                // while the Collider Editor is open, Ctrl+Z belongs to it (ColEdUpdate), so a
+                // collider undo does not also step back a weight edit
+                else if (model != null && ctrl && Input.GetKeyDown(KeyCode.Z) &&
+                         !(colEdWindow != null && colEdWindow.activeSelf))
                 {
                     if (shift) DoRedo();
                     else DoUndo();
@@ -1251,6 +1507,127 @@ namespace VNyanWeightStudio
         }
 
         void OnApplicationQuit() { SaveSettings(); }
+
+        void OnDestroy() { if (glMat != null) Destroy(glMat); }
+
+        void CreateGLMat()
+        {
+            // "Hidden/Internal-Colored" is the ideal line shader, but it's often stripped from
+            // player builds (VNyan is a player build). Fall back to shaders that a uGUI app
+            // always ships, so collider viz still works.
+            Shader sh = Shader.Find("Hidden/Internal-Colored");
+            if (sh == null) sh = Shader.Find("Sprites/Default");
+            if (sh == null) sh = Shader.Find("UI/Default");
+            if (sh == null) sh = Shader.Find("Unlit/Color");
+            if (sh == null) { Debug.LogWarning("[WeightStudio] No GL shader found, collider viz unavailable"); return; }
+            glMat = new Material(sh);
+            glMat.hideFlags = HideFlags.HideAndDontSave;
+            glMat.SetInt("_ZWrite", 0);
+            glMat.SetInt("_ZTest", 8); // Always: visible through avatar mesh
+            glMat.SetInt("_Cull", 0);
+            Debug.Log("[WeightStudio] GL collider material using shader: " + sh.name);
+        }
+
+        void OnToggleColliders()
+        {
+            showColliders = !showColliders;
+            if (showCollidersText != null)
+                showCollidersText.text = showColliders ? "Hide Colliders" : "Show Colliders";
+            Debug.Log("[WeightStudio] ShowColliders toggled -> " + showColliders
+                + " (glMat=" + (glMat != null ? glMat.shader.name : "NULL")
+                + ", colliders=" + (genColliders != null ? genColliders.Count : 0) + ")");
+            if (showColliders && (genColliders == null || genColliders.Count == 0))
+                SetStatus("No colliders yet. Click Generate Colliders first.");
+            else
+                SetStatus(showColliders ? "Collider viz ON: wireframes drawn in viewport" : "Collider viz OFF");
+        }
+
+        void RebuildColliderBoneCache()
+        {
+            colliderBoneCache = new Dictionary<string, Transform>();
+            if (colliderAvatarRoot == null) return;
+            foreach (Transform t in colliderAvatarRoot.GetComponentsInChildren<Transform>(true))
+                if (!colliderBoneCache.ContainsKey(t.name))
+                    colliderBoneCache[t.name] = t;
+        }
+
+        void OnRenderObject()
+        {
+            bool editorOpen = colEdWindow != null && colEdWindow.activeSelf;
+            if ((!showColliders && !editorOpen) || glMat == null) return;
+            if (genColliders == null || genColliders.Count == 0) return;
+            if (colliderBoneCache == null) return;
+
+            glMat.SetPass(0);
+            GL.PushMatrix();
+            GL.Begin(GL.LINES);
+
+            for (int i = 0; i < genColliders.Count; i++)
+            {
+                ColliderGen.GenCollider col = genColliders[i];
+                Transform bone;
+                colliderBoneCache.TryGetValue(col.boneName, out bone);
+
+                Vector3 wCenter = bone != null ? bone.TransformPoint(col.center) : col.center;
+                bool sel = editorOpen && i == colEdSel;
+
+                if (col.shape == ColliderGen.GenShape.Sphere)
+                {
+                    GL.Color(sel ? new Color(1f, 0.25f, 1f, 1f) : new Color(0f, 1f, 0.85f, 1f));
+                    DrawWireSphereGL(wCenter, col.radius, 20);
+                }
+                else
+                {
+                    GL.Color(sel ? new Color(1f, 0.25f, 1f, 1f) : new Color(1f, 0.85f, 0f, 1f));
+                    Vector3 wEnd = bone != null ? bone.TransformPoint(col.centerEnd) : col.centerEnd;
+                    DrawWireCapsuleGL(wCenter, wEnd, col.radius, 16);
+                }
+            }
+
+            GL.End();
+            GL.PopMatrix();
+        }
+
+        static void DrawWireCircleGL(Vector3 center, Vector3 normal, float r, int segs)
+        {
+            Vector3 u = Vector3.Cross(normal, Vector3.up);
+            if (u.sqrMagnitude < 0.001f) u = Vector3.Cross(normal, Vector3.forward);
+            u.Normalize();
+            Vector3 v = Vector3.Cross(normal, u).normalized;
+            float step = 2f * Mathf.PI / segs;
+            Vector3 prev = center + u * r;
+            for (int i = 1; i <= segs; i++)
+            {
+                float a = i * step;
+                Vector3 next = center + (Mathf.Cos(a) * u + Mathf.Sin(a) * v) * r;
+                GL.Vertex(prev); GL.Vertex(next);
+                prev = next;
+            }
+        }
+
+        static void DrawWireSphereGL(Vector3 center, float r, int segs)
+        {
+            DrawWireCircleGL(center, Vector3.up, r, segs);
+            DrawWireCircleGL(center, Vector3.right, r, segs);
+            DrawWireCircleGL(center, Vector3.forward, r, segs);
+        }
+
+        static void DrawWireCapsuleGL(Vector3 a, Vector3 b, float r, int segs)
+        {
+            Vector3 ax = b - a;
+            if (ax.sqrMagnitude < 1e-8f) { DrawWireSphereGL(a, r, segs); return; }
+            ax.Normalize();
+            DrawWireCircleGL(a, ax, r, segs);
+            DrawWireCircleGL(b, ax, r, segs);
+            Vector3 u = Vector3.Cross(ax, Vector3.up);
+            if (u.sqrMagnitude < 0.001f) u = Vector3.Cross(ax, Vector3.forward);
+            u.Normalize();
+            Vector3 v = Vector3.Cross(ax, u).normalized;
+            GL.Vertex(a + u * r); GL.Vertex(b + u * r);
+            GL.Vertex(a - u * r); GL.Vertex(b - u * r);
+            GL.Vertex(a + v * r); GL.Vertex(b + v * r);
+            GL.Vertex(a - v * r); GL.Vertex(b - v * r);
+        }
 
         void SaveSettings()
         {

@@ -13,11 +13,11 @@ namespace VNyanWeightStudio
     /// Writes a real <c>.unitypackage</c> (gzip-compressed USTAR tar, the same
     /// container the Unity editor produces) containing self-contained,
     /// Unity-2019.4 + 2022.3-compatible runtime scripts:
-    ///   • <c>WeightStudioCollider</c>   — sphere/capsule/plane collider component.
-    ///   • <c>WeightStudioSpringBone</c> — lightweight spring-bone chain solver that
+    ///   • <c>WeightStudioCollider</c>: sphere/capsule/plane collider component.
+    ///   • <c>WeightStudioSpringBone</c>: lightweight spring-bone chain solver that
     ///     collides against those colliders (a plain-Unity port of the VNyan
     ///     PhysBones / Jiggle plugins).
-    ///   • <c>WeightStudioColliderImporter</c> — rebuilds colliders on an avatar from
+    ///   • <c>WeightStudioColliderImporter</c>: rebuilds colliders on an avatar from
     ///     an exported <c>*.physbones.json</c> sidecar at runtime/edit time.
     /// If colliders are supplied, a ready-to-use sample JSON is bundled too.
     ///
@@ -207,19 +207,19 @@ namespace VNyanWeightStudio
 "{\n    \"name\": \"WeightStudio.Runtime\",\n    \"references\": [],\n    \"includePlatforms\": [],\n    \"excludePlatforms\": [],\n    \"autoReferenced\": true\n}\n";
 
         const string README =
-@"Weight Studio — Unity addon + model importer
-============================================
+@"Weight Studio: Unity addon + model importer
+===========================================
 
 Drop this folder into any Unity 2019.4.x or 2022.3.x project. It contains:
 
-  • Editor/VbxScriptedImporter.cs — a ScriptedImporter that turns a Weight Studio
+  • Editor/VbxScriptedImporter.cs: a ScriptedImporter that turns a Weight Studio
     '.vbx' file into a full avatar prefab on import, KEEPING an unlimited number of
     bone influences per vertex (Mesh.SetBoneWeights). FBX import caps skinning at 4
     bones/vertex unless you choose Skin Weights = Custom; a .vbx has no such cap, and
     the importer also flips the project to QualitySettings.skinWeights = Unlimited so
     >4 influences actually render. Skeleton, blendshapes and best-effort materials/
     textures are rebuilt as sub-assets, with a Humanoid Avatar when the bone map allows.
-  • Model/<avatar>.vbx — your exported model (present only if you had an avatar loaded
+  • Model/<avatar>.vbx: your exported model (present only if you had an avatar loaded
     at export time). Select it to see import options (Build Humanoid / Force Unlimited
     Skin Weights), or drag the imported prefab into a scene.
   • Plain-UnityEngine ports of the VNyan PhysBones / Jiggle physics, plus a loader for
@@ -884,7 +884,7 @@ namespace WeightStudio
                 doc.meshes.Add(m);
             }
 
-            // colliders (v2+) — read past them so the texture pool aligns
+            // colliders (v2+): read past them so the texture pool aligns
             if (ver >= 2)
             {
                 int cc = r.ReadInt32();

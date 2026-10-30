@@ -8,7 +8,7 @@ namespace VNyanWeightStudio
     /// <summary>
     /// Editable, weld-aware skin-weight model for one SkinnedMeshRenderer.
     ///
-    /// The authoritative editing structure is <see cref="weldWeights"/> — one
+    /// The authoritative editing structure is <see cref="weldWeights"/>: one
     /// sparse boneIndex->weight map per *welded* vertex group (vertices that share
     /// a position are welded so seams paint/smooth as one). All brush and smoothing
     /// tools mutate weldWeights; <see cref="ApplyToMesh"/> scatters the result back
@@ -16,7 +16,7 @@ namespace VNyanWeightStudio
     /// supports an unlimited number of bones per vertex (unlike the legacy
     /// 4-influence BoneWeight struct).
     ///
-    /// Pure Unity — no VNyan dependency — so it can be reused or unit-tested.
+    /// Pure Unity (no VNyan dependency), so it can be reused or unit-tested.
     /// </summary>
     public class WeightModel
     {
@@ -191,7 +191,7 @@ namespace VNyanWeightStudio
             _lastBakeTime = Time.unscaledTime;
 
             if (_bakeTmp == null) _bakeTmp = new Mesh();
-            smr.BakeMesh(_bakeTmp, true);
+            LiveShapes.Bake(smr, _bakeTmp);   // shape keys as rendered, not VNyan's mid-frame zeros
             Vector3[] baked = _bakeTmp.vertices;
             Matrix4x4 l2w = smr.transform.localToWorldMatrix;
 
@@ -231,7 +231,7 @@ namespace VNyanWeightStudio
                 tmp.Clear();
                 foreach (var kv in dict)
                     if (kv.Value > minWeight) tmp.Add(kv);
-                // sort descending — SetBoneWeights requires per-vertex descending order
+                // sort descending: SetBoneWeights requires per-vertex descending order
                 tmp.Sort((x, y) => y.Value.CompareTo(x.Value));
 
                 if (maxBonesPerVertex > 0 && tmp.Count > maxBonesPerVertex)

@@ -7,13 +7,13 @@ namespace VNyanWeightStudioReader
 {
     /// <summary>
     /// Reconstructs a full avatar GameObject hierarchy from a <see cref="VbxDoc"/>
-    /// at VNyan runtime — skeleton transforms, SkinnedMeshRenderers, meshes
+    /// at VNyan runtime: skeleton transforms, SkinnedMeshRenderers, meshes
     /// (with an UNLIMITED number of bone influences per vertex preserved via
     /// <c>Mesh.SetBoneWeights</c>), blendshapes, and best-effort materials/textures.
     ///
     /// VBX stores everything in Unity's own coordinate space (it was written
     /// straight off live SkinnedMeshRenderers), so no axis conversion is needed on
-    /// the way back in — unlike VRM/glTF import.
+    /// the way back in, unlike VRM/glTF import.
     /// </summary>
     public static class VbxImporter
     {
@@ -161,15 +161,80 @@ namespace VNyanWeightStudioReader
             var result = new Material[n];
             for (int i = 0; i < n; i++)
             {
+                VbxMaterial vmat = (vm.materials != null && i < vm.materials.Count) ? vm.materials[i] : null;
                 if (real != null && i < real.Length && real[i] != null)
                 {
-                    result[i] = real[i];
+                    result[i] = WithLiveEdits(real[i], vmat, doc, texCache);
                     continue;
                 }
-                VbxMaterial vmat = (vm.materials != null && i < vm.materials.Count) ? vm.materials[i] : null;
                 result[i] = BuildMaterial(vmat, doc, texCache);
             }
             return result;
+        }
+
+        // The embedded bundle holds the material as it SHIPPED. The captured v3 properties
+        // hold it as it looked at export time, including live edits (Material Studio).
+        // Same shader: start from the real compiled material and lay the captured values
+        // on top. Different shader (switched or unlocked live): rebuild on the captured
+        // shader when this runtime has it, else keep the real one with the values that fit.
+        static Material WithLiveEdits(Material real, VbxMaterial vmat, VbxDoc doc, Dictionary<string, Texture2D> texCache)
+        {
+            if (vmat == null || ForceVisibleMaterials) return real;
+            bool haveGeneric = (vmat.floats != null && vmat.floats.Count > 0) || (vmat.colors != null && vmat.colors.Count > 0);
+            if (!haveGeneric) return real;
+            string realShader = real.shader != null ? real.shader.name : "";
+            if (!string.IsNullOrEmpty(vmat.shader) && vmat.shader != realShader)
+            {
+                Shader captured = FindShaderAnywhere(vmat.shader);
+                if (captured != null) return BuildMaterial(vmat, doc, texCache);
+            }
+            var m = new Material(real) { name = real.name };
+            bool sameShader = vmat.shader == realShader;
+            if (sameShader && vmat.keywords != null) m.shaderKeywords = (string[])vmat.keywords.Clone();
+            if (vmat.floats != null) foreach (var f in vmat.floats) if (m.HasProperty(f.name)) m.SetFloat(f.name, f.value);
+            if (vmat.colors != null) foreach (var c in vmat.colors) if (m.HasProperty(c.name)) m.SetColor(c.name, c.value);
+            if (vmat.vectors != null) foreach (var v in vmat.vectors) if (m.HasProperty(v.name)) m.SetVector(v.name, v.value);
+            if (vmat.texProps != null)
+            {
+                foreach (var tp in vmat.texProps)
+                {
+                    if (!m.HasProperty(tp.name)) continue;
+                    Texture cur = m.GetTexture(tp.name);
+                    if (tp.texIndex < 0) { if (cur != null) m.SetTexture(tp.name, null); }
+                    else if (cur == null || !SameSize(doc, tp.texIndex, cur))
+                    {
+                        // a texture that was swapped live (a different picture) - the real
+                        // compiled one is kept whenever the captured copy is the same image size
+                        Texture2D tex = DecodePooled(doc, texCache, tp.texIndex, IsLinearProp(tp.name));
+                        if (tex != null) m.SetTexture(tp.name, tex);
+                    }
+                    m.SetTextureScale(tp.name, tp.scale);
+                    m.SetTextureOffset(tp.name, tp.offset);
+                }
+            }
+            if (sameShader && vmat.renderQueue >= 0) m.renderQueue = vmat.renderQueue;
+            return m;
+        }
+
+        static Shader FindShaderAnywhere(string name)
+        {
+            Shader s = Shader.Find(name);
+            if (s != null) return s;
+            // shaders loaded from other bundles (Material Studio's shader packages, avatars)
+            foreach (Shader x in Resources.FindObjectsOfTypeAll<Shader>())
+                if (x != null && x.name == name && x.isSupported) return x;
+            return null;
+        }
+
+        // PNG width/height live in the IHDR chunk at bytes 16..23 (big-endian).
+        static bool SameSize(VbxDoc doc, int texIndex, Texture t)
+        {
+            if (doc.textures == null || texIndex < 0 || texIndex >= doc.textures.Count) return true;
+            byte[] png = doc.textures[texIndex];
+            if (png == null || png.Length < 24) return true;
+            int w = (png[16] << 24) | (png[17] << 16) | (png[18] << 8) | png[19];
+            int h = (png[20] << 24) | (png[21] << 16) | (png[22] << 8) | png[23];
+            return w == t.width && h == t.height;
         }
 
         static void ApplyWeights(Mesh mesh, VbxMesh vm)
@@ -205,7 +270,7 @@ namespace VNyanWeightStudioReader
 
         // When loading a standalone avatar (no live VNyan avatar to borrow real materials
         // from), the captured shader (e.g. VRM/MToon) often can't be reconstructed into a
-        // drawable state at runtime — VNyan's UniVRM build doesn't expose MToon's material
+        // drawable state at runtime: VNyan's UniVRM build doesn't expose MToon's material
         // setup API, so a freshly-created MToon material renders nothing. In that case we
         // render with a simple Unlit material built from the base texture + color so the
         // model is at least VISIBLE (lighting/shading lost, but you can see it).
@@ -224,7 +289,7 @@ namespace VNyanWeightStudioReader
             // 1) Can we recreate the EXACT shader the material was authored with?
             Shader shader = null;
             if (vmat != null && !string.IsNullOrEmpty(vmat.shader))
-                shader = Shader.Find(vmat.shader);
+                shader = FindShaderAnywhere(vmat.shader);
 
             // 2) Authored shader is missing from this runtime (e.g. Poiyomi, lilToon).
             //    Reconstructing onto a random shader by raw property name leaves it mostly
@@ -554,8 +619,8 @@ namespace VNyanWeightStudioReader
             return mat;
         }
 
-        // Some shaders (notably VRM/MToon) carry fixed-function render state — blend mode,
-        // ZWrite, cull, stencil, outline, keyword gating — that is NOT configured just by
+        // Some shaders (notably VRM/MToon) carry fixed-function render state (blend mode,
+        // ZWrite, cull, stencil, outline, keyword gating) that is NOT configured just by
         // setting their float/color/texture properties. The shader's own setup routine has
         // to push those values into the material's render state, or it renders wrong (often
         // fully invisible). UniVRM is loaded in VNyan, so call MToon's own
@@ -635,7 +700,7 @@ namespace VNyanWeightStudioReader
         // ------------------------------------------------- embedded source-bundle materials
 
         // Loads an embedded source AssetBundle (.vsfavatar bytes) in-memory and indexes its
-        // real, fully-compiled materials so they can be assigned to the rebuilt meshes —
+        // real, fully-compiled materials so they can be assigned to the rebuilt meshes,
         // giving faithful results for shaders that don't exist in this runtime (locked
         // Poiyomi, lilToon, …). Match priority: renderer name (the exporter sets
         // VbxMesh.name = SkinnedMeshRenderer.name) + submesh order; then material name.

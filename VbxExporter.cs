@@ -50,7 +50,7 @@ namespace VNyanWeightStudio
 
             foreach (var t in order)
             {
-                // NOTE: do NOT call index.TryGetValue(t.parent, ...) here — the avatar root
+                // NOTE: do NOT call index.TryGetValue(t.parent, ...) here: the avatar root
                 // has a null parent, and Dictionary.TryGetValue(null) throws ArgumentNullException
                 // ("Value cannot be null. Parameter name: key"). The parent index is computed
                 // safely below with an explicit null guard.
