@@ -8,8 +8,8 @@
     Visual Studio / Rider can give you red squiggles and autocomplete; it is not
     required to ship the plugin.
 
-    Point the HintPaths below at the DLLs in your VNyan install. Referencing
-    everything in VNyan_Data\Managed guarantees version-correct UnityEngine.
+    The references point into your VNyan folder's VNyan_Data\Managed (set VNyanDir
+    below), which guarantees version-correct UnityEngine.
   -->
 
   <PropertyGroup>
@@ -23,21 +23,30 @@
     <DefaultItemExcludes>$(DefaultItemExcludes);_unitybuild\**;dist\**</DefaultItemExcludes>
   </PropertyGroup>
 
+  <PropertyGroup>
+    <!-- your VNyan folder (the one with VNyan.exe inside). Set it here, with
+         dotnet build -p:VNyanDir="...", or through the VNYAN environment variable
+         (the build scripts read that one too). -->
+    <VNyanDir Condition="'$(VNyanDir)' == ''">$(VNYAN)</VNyanDir>
+    <VNyanManaged>$(VNyanDir)\VNyan_Data\Managed</VNyanManaged>
+  </PropertyGroup>
+
   <ItemGroup>
-    <Reference Include="UnityEngine"><HintPath>C:\Program Files\VNyan\VNyan_Data\Managed\UnityEngine.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="UnityEngine.CoreModule"><HintPath>C:\Program Files\VNyan\VNyan_Data\Managed\UnityEngine.CoreModule.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="UnityEngine.AnimationModule"><HintPath>C:\Program Files\VNyan\VNyan_Data\Managed\UnityEngine.AnimationModule.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="UnityEngine.PhysicsModule"><HintPath>C:\Program Files\VNyan\VNyan_Data\Managed\UnityEngine.PhysicsModule.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="UnityEngine.IMGUIModule"><HintPath>C:\Program Files\VNyan\VNyan_Data\Managed\UnityEngine.IMGUIModule.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="UnityEngine.InputLegacyModule"><HintPath>C:\Program Files\VNyan\VNyan_Data\Managed\UnityEngine.InputLegacyModule.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="UnityEngine.ImageConversionModule"><HintPath>C:\Program Files\VNyan\VNyan_Data\Managed\UnityEngine.ImageConversionModule.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="Unity.Collections"><HintPath>C:\Program Files\VNyan\VNyan_Data\Managed\Unity.Collections.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="UnityEngine.SharedInternalsModule"><HintPath>C:\Program Files\VNyan\VNyan_Data\Managed\UnityEngine.SharedInternalsModule.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="UnityEngine.UIModule"><HintPath>C:\Program Files\VNyan\VNyan_Data\Managed\UnityEngine.UIModule.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="UnityEngine.UI"><HintPath>C:\Program Files\VNyan\VNyan_Data\Managed\UnityEngine.UI.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="UnityEngine.TextRenderingModule"><HintPath>C:\Program Files\VNyan\VNyan_Data\Managed\UnityEngine.TextRenderingModule.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="Newtonsoft.Json"><HintPath>C:\Program Files\VNyan\VNyan_Data\Managed\Newtonsoft.Json.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="VNyanInterface"><HintPath>C:\Program Files\VNyan\VNyan_Data\Managed\VNyanInterface.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine"><HintPath>$(VNyanManaged)\UnityEngine.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.CoreModule"><HintPath>$(VNyanManaged)\UnityEngine.CoreModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.AnimationModule"><HintPath>$(VNyanManaged)\UnityEngine.AnimationModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.PhysicsModule"><HintPath>$(VNyanManaged)\UnityEngine.PhysicsModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.IMGUIModule"><HintPath>$(VNyanManaged)\UnityEngine.IMGUIModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.InputLegacyModule"><HintPath>$(VNyanManaged)\UnityEngine.InputLegacyModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.ImageConversionModule"><HintPath>$(VNyanManaged)\UnityEngine.ImageConversionModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="Unity.Collections"><HintPath>$(VNyanManaged)\Unity.Collections.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.SharedInternalsModule"><HintPath>$(VNyanManaged)\UnityEngine.SharedInternalsModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.UIModule"><HintPath>$(VNyanManaged)\UnityEngine.UIModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.UI"><HintPath>$(VNyanManaged)\UnityEngine.UI.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.TextRenderingModule"><HintPath>$(VNyanManaged)\UnityEngine.TextRenderingModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.UnityWebRequestModule"><HintPath>$(VNyanManaged)\UnityEngine.UnityWebRequestModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="Newtonsoft.Json"><HintPath>$(VNyanManaged)\Newtonsoft.Json.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="VNyanInterface"><HintPath>$(VNyanManaged)\VNyanInterface.dll</HintPath><Private>false</Private></Reference>
   </ItemGroup>
 
 </Project>

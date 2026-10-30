@@ -85,7 +85,7 @@ namespace VNyanWeightStudio
             // and the root bone has no parent, so any world offset here would be baked
             // straight into the .vbx (and the avatar would render far off-screen when
             // loaded standalone). Keep the authored rest pose intact and instead just
-            // hide the clone by disabling its renderers, invisibility without touching
+            // hide the clone by disabling its renderers: invisibility without touching
             // any data the exporter reads. (Export is synchronous and the clone is
             // DestroyImmediate'd before any frame renders anyway; this is belt-and-braces.)
             foreach (var rend in inst.GetComponentsInChildren<Renderer>(true))

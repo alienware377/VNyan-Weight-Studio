@@ -207,8 +207,8 @@ namespace VNyanWeightStudio
 "{\n    \"name\": \"WeightStudio.Runtime\",\n    \"references\": [],\n    \"includePlatforms\": [],\n    \"excludePlatforms\": [],\n    \"autoReferenced\": true\n}\n";
 
         const string README =
-@"Weight Studio, Unity addon + model importer
-============================================
+@"Weight Studio: Unity addon + model importer
+===========================================
 
 Drop this folder into any Unity 2019.4.x or 2022.3.x project. It contains:
 
@@ -884,7 +884,7 @@ namespace WeightStudio
                 doc.meshes.Add(m);
             }
 
-            // colliders (v2+), read past them so the texture pool aligns
+            // colliders (v2+): read past them so the texture pool aligns
             if (ver >= 2)
             {
                 int cc = r.ReadInt32();

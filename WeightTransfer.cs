@@ -80,7 +80,7 @@ namespace VNyanWeightStudio
                 if (worldSpace)
                 {
                     Mesh baked = new Mesh();
-                    smr.BakeMesh(baked, true);
+                    LiveShapes.Bake(smr, baked);   // shape keys as rendered
                     Vector3[] bp = baked.vertices;
                     Matrix4x4 l2w = smr.transform.localToWorldMatrix;
                     s.pos = new Vector3[vc];

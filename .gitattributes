@@ -1,0 +1,4 @@
+# Windows batch files keep CRLF line endings in every checkout and source download
+# (cmd.exe can miss goto labels in a batch file with LF-only line endings)
+*.bat text eol=crlf
+*.cmd text eol=crlf

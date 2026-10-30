@@ -1,24 +1,32 @@
-# Unity generated
-_unitybuild/Library/
-_unitybuild/Logs/
-_unitybuild/Temp/
-_unitybuild/UserSettings/
-_unitybuild/obj/
-_unitybuild/*.suo
-_unitybuild/*.user
-_unitybuild/.vs/
+# Unity generated (both build projects: _unitybuild and Reader/_unitybuild)
+**/_unitybuild/Library/
+**/_unitybuild/Logs/
+**/_unitybuild/Temp/
+**/_unitybuild/UserSettings/
+**/_unitybuild/obj/
+**/_unitybuild/.vs/
+**/_unitybuild/*.csproj
+**/_unitybuild/*.sln
+**/_unitybuild/*.suo
+**/_unitybuild/*.user
 
-# Same for Reader
-Reader/_unitybuild/Library/
-Reader/_unitybuild/Logs/
-Reader/_unitybuild/Temp/
-Reader/_unitybuild/UserSettings/
-Reader/_unitybuild/obj/
+# Build output and logs (the files that ship live in dist/ and Reader/dist/)
+**/_unitybuild/AssetBundles/
+*.log
+bin/
+obj/
+release/
+__pycache__/
+*.pyc
 
-# OS
+# Editor and OS junk
+*.bak
+*.user
+*.suo
+*.sln.docstates
+.vs/
+.vscode/
+.idea/
 Thumbs.db
 .DS_Store
-
-# Build artifacts (keep dist/)
-*.user
-*.sln.docstates
+desktop.ini
