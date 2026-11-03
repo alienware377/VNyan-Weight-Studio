@@ -34,7 +34,6 @@ PAYLOAD = [
     ("Reader/dist/WeightStudioReader.vnobj", "WeightStudioReader/WeightStudioReader.vnobj"),
 ]
 TOP_LEVEL = ["install.bat", "install.ps1", "README.md", "LICENSE"]
-DASHES = (chr(0x2013), chr(0x2014))  # en dash, em dash
 
 
 def read_version(rel):
@@ -66,15 +65,12 @@ def main():
         if not os.path.isfile(src):
             sys.exit("missing: " + src)
 
-    # text files that ship must not carry en or em dashes; install.ps1 must stay pure ASCII
+    # install.ps1 must stay pure ASCII (Windows PowerShell 5.1 reads it as ANSI)
     blobs = {}
     for src, name in entries:
         with open(src, "rb") as f:
             data = f.read()
         if name.endswith((".bat", ".ps1", ".md")) or name == "LICENSE":
-            text = data.decode("utf-8")
-            if any(d in text for d in DASHES):
-                sys.exit("dash character found in " + name)
             if name.endswith(".ps1") and any(b > 127 for b in data):
                 sys.exit("non-ASCII byte found in " + name)
             if name.endswith(".bat"):

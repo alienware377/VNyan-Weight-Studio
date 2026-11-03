@@ -7,14 +7,12 @@ namespace VNyanWeightStudio
     /// <summary>
     /// Shape-key weights as VNyan actually RENDERS them.
     ///
-    /// VNyan zeroes an avatar's shape keys early in every frame and sets them again late,
-    /// after the plugins' LateUpdate (measured on a test avatar: a garment's shape key reads 0 in
-    /// Update and LateUpdate, and its real value from onPreCull to the end of the frame). Anything reading
-    /// or baking shape keys from Update/LateUpdate/a button click sees the bare shape: the
-    /// heatmap overlay copied zeros and sat inside the visible garment, the brush aimed at a
-    /// smaller surface than the one on screen, and Weight Transfer sampled the wrong positions.
-    /// So the weights of the renderers Weight Studio works on are captured at the END of the
-    /// frame, and every bake goes through <see cref="Bake"/>, which uses them.
+    /// VNyan zeroes an avatar's shape keys early in every frame and sets them again after the
+    /// plugins' LateUpdate: in Update and LateUpdate a shape key reads 0, and from onPreCull to the
+    /// end of the frame it has its real value. Code that reads or bakes shape keys from Update,
+    /// LateUpdate or a button click therefore sees the unmorphed mesh. To match what is on screen,
+    /// the weights of the renderers Weight Studio works on are captured at the end of the frame,
+    /// and every bake goes through <see cref="Bake"/>, which uses them.
     /// </summary>
     public static class LiveShapes
     {
