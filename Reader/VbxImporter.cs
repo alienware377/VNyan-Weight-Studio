@@ -8,7 +8,7 @@ namespace VNyanWeightStudioReader
     /// <summary>
     /// Reconstructs a full avatar GameObject hierarchy from a <see cref="VbxDoc"/>
     /// at VNyan runtime: skeleton transforms, SkinnedMeshRenderers, meshes
-    /// (with an UNLIMITED number of bone influences per vertex preserved via
+    /// (with an unlimited number of bone influences per vertex preserved via
     /// <c>Mesh.SetBoneWeights</c>), blendshapes, and best-effort materials/textures.
     ///
     /// VBX stores everything in Unity's own coordinate space (it was written
@@ -76,7 +76,7 @@ namespace VNyanWeightStudioReader
             }
             finally
             {
-                // Unload(false): frees the bundle container but KEEPS the loaded material/
+                // Unload(false): frees the bundle container but keeps the loaded material/
                 // shader/texture objects alive (they're now referenced by our renderers).
                 if (bank != null) bank.Release();
             }
@@ -172,7 +172,7 @@ namespace VNyanWeightStudioReader
             return result;
         }
 
-        // The embedded bundle holds the material as it SHIPPED. The captured v3 properties
+        // The embedded bundle holds the material as it shipped. The captured v3 properties
         // hold it as it looked at export time, including live edits (Material Studio).
         // Same shader: start from the real compiled material and lay the captured values
         // on top. Different shader (switched or unlocked live): rebuild on the captured
@@ -203,7 +203,7 @@ namespace VNyanWeightStudioReader
                     if (tp.texIndex < 0) { if (cur != null) m.SetTexture(tp.name, null); }
                     else if (cur == null || !SameSize(doc, tp.texIndex, cur))
                     {
-                        // a texture that was swapped live (a different picture) - the real
+                        // a texture that was swapped live (a different picture); the real
                         // compiled one is kept whenever the captured copy is the same image size
                         Texture2D tex = DecodePooled(doc, texCache, tp.texIndex, IsLinearProp(tp.name));
                         if (tex != null) m.SetTexture(tp.name, tex);
@@ -273,7 +273,7 @@ namespace VNyanWeightStudioReader
         // drawable state at runtime: VNyan's UniVRM build doesn't expose MToon's material
         // setup API, so a freshly-created MToon material renders nothing. In that case we
         // render with a simple Unlit material built from the base texture + color so the
-        // model is at least VISIBLE (lighting/shading lost, but you can see it).
+        // model is at least visible (lighting/shading lost, but you can see it).
         public static bool ForceVisibleMaterials = false;
 
         // When true (standalone load only), prefer real materials harvested from the
@@ -286,14 +286,14 @@ namespace VNyanWeightStudioReader
         {
             if (ForceVisibleMaterials) return BuildVisibleFallback(vmat, doc, texCache);
 
-            // 1) Can we recreate the EXACT shader the material was authored with?
+            // 1) Can we recreate the exact shader the material was authored with?
             Shader shader = null;
             if (vmat != null && !string.IsNullOrEmpty(vmat.shader))
                 shader = FindShaderAnywhere(vmat.shader);
 
             // 2) Authored shader is missing from this runtime (e.g. Poiyomi, lilToon).
             //    Reconstructing onto a random shader by raw property name leaves it mostly
-            //    default, so instead pick the closest AVAILABLE substitute and remap the
+            //    default, so instead pick the closest available substitute and remap the
             //    captured base color / textures / emission / normal onto it. Toon shaders
             //    map to MToon (present in VNyan); everything else to Standard.
             if (shader == null)
@@ -315,7 +315,7 @@ namespace VNyanWeightStudioReader
                 // properties/passes behave correctly, then push every captured value.
                 // Because we also restore the captured render-state floats (_SrcBlend,
                 // _DstBlend, _ZWrite, _BlendMode, _Cull, ...) and renderQueue, MToon
-                // reconstructs into the correct drawable state WITHOUT needing MToon's
+                // reconstructs into the correct drawable state without needing MToon's
                 // own ValidateProperties setup API (which VNyan doesn't expose).
                 if (vmat.keywords != null)
                     foreach (var kw in vmat.keywords)

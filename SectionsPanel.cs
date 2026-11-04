@@ -51,7 +51,7 @@ namespace VNyanWeightStudio
             }
             // visual order: anchoredPosition y runs negative downwards. A header shares its
             // row with buttons (Meshes + Rescan); List.Sort is unstable, so on a tie the header
-            // must come first, or the button joins the section ABOVE and folding that one
+            // must come first, or the button joins the section above and folding that one
             // pulls the next header up over it.
             kids.Sort((a, b) =>
             {

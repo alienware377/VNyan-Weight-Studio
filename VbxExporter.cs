@@ -10,7 +10,7 @@ namespace VNyanWeightStudio
     /// .vbx file. Reads whatever influence count the mesh currently has, so &gt;4
     /// bones/vertex survive the round-trip.
     ///
-    /// Call AFTER WeightModel.ApplyToMesh() so the painted weights are on the mesh.
+    /// Call after WeightModel.ApplyToMesh() so the painted weights are on the mesh.
     /// </summary>
     public static class VbxExporter
     {

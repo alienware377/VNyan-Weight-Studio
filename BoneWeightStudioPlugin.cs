@@ -17,7 +17,7 @@ namespace VNyanWeightStudio
     ///  - Paint weights directly on the model with an add / subtract / replace / smooth /
     ///    blur brush (radius, strength, falloff).
     ///  - Boundary-aware Laplacian smoothing over the whole mesh or a brushed selection.
-    ///  - Maintains an UNLIMITED number of bone influences per vertex.
+    ///  - Maintains an unlimited number of bone influences per vertex.
     ///  - Export to VRM 0.x, VRM 1.0 (4-influence cap), or .vbx (unlimited influences,
     ///    re-loadable in VNyan via the companion Reader plugin).
     ///
@@ -434,7 +434,7 @@ namespace VNyanWeightStudio
         {
             if (model != null && model.dirty) model.ApplyToMesh();
 
-            // gather the CHOSEN avatar's meshes (same scoping as Export) so we embed
+            // gather the chosen avatar's meshes (same scoping as Export) so we embed
             // exactly one copy of the model, not other avatars / a Pose Studio copy.
             Transform root;
             var renderers = GatherAvatarRenderers(out root);
@@ -450,7 +450,7 @@ namespace VNyanWeightStudio
                 string path = chosen;
 
                 // Build the model VBX into a temp file and embed it in the package, alongside
-                // a ScriptedImporter that re-imports it with UNLIMITED skin weights (>4/vertex).
+                // a ScriptedImporter that re-imports it with unlimited skin weights (>4/vertex).
                 string vbxAssetName = null;
                 if (renderers != null && renderers.Count > 0)
                 {
@@ -684,7 +684,7 @@ namespace VNyanWeightStudio
             return p;
         }
 
-        // The file is SHARED with the soft-body studios (Jello etc.): they read and
+        // The file is shared with the soft-body studios (Jello etc.): they read and
         // write the same list, so track its timestamp and reload when someone else
         // changes it, or our stale copy would clobber their edits on the next save.
         DateTime hiddenStamp;
@@ -876,7 +876,7 @@ namespace VNyanWeightStudio
         {
             if (model != null && model.dirty) model.ApplyToMesh();
 
-            // gather all meshes of the CHOSEN avatar (not every SMR in the scene: other
+            // gather all meshes of the chosen avatar (not every SMR in the scene: other
             // avatars / a Pose Studio copy / our heatmap overlay would otherwise duplicate).
             Transform root;
             var renderers = GatherAvatarRenderers(out root);
@@ -1042,9 +1042,9 @@ namespace VNyanWeightStudio
             }
         }
 
-        // ---------------------------------------------------------- TEMPORARY recovery tool
+        // ---------------------------------------------------------- recovery tool (temporary)
         // Reads a (possibly bug-duplicated) .vbx and re-applies its weights onto the
-        // CURRENTLY-LOADED original avatar, matching meshes by name and bones by name.
+        // currently loaded original avatar, matching meshes by name and bones by name.
         // Duplicate copies of a mesh are de-duplicated: for each renderer we pick the VBX
         // copy whose influences best resolve onto the loaded skeleton (the stray second
         // avatar's copy has an all -1 boneMap, so it scores ~0 and is ignored).
@@ -1094,7 +1094,7 @@ namespace VNyanWeightStudio
                 }
                 if (candidates.Count > 1) dupIgnored += candidates.Count - 1;
 
-                // name -> bone slot on the LOADED renderer
+                // name -> bone slot on the loaded renderer
                 Transform[] bones = smr.bones;
                 var nameToSlot = new Dictionary<string, int>(bones != null ? bones.Length : 0);
                 if (bones != null)
@@ -1437,7 +1437,7 @@ namespace VNyanWeightStudio
         void SetStatus(string msg) { if (statusText != null) statusText.text = msg; }
 
         // ------------------------------------------------------------ selection-paint toggle (via keyboard)
-        // Hold Left-Shift to paint a SELECTION instead of weights (for 'Smooth Selection').
+        // Hold Left-Shift to paint a selection instead of weights (for 'Smooth Selection').
         void LateUpdate()
         {
             PhaseNote("WS LateUpdate");

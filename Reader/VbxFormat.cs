@@ -11,10 +11,10 @@ namespace VNyanWeightStudio
     //
     //  A self-contained binary avatar-skinning interchange format. Unlike VRM/glTF
     //  (which the VRM consumer convention caps at 4 bone influences per vertex), VBX
-    //  stores an UNLIMITED number of bone influences per vertex, plus the full
+    //  stores an unlimited number of bone influences per vertex, plus the full
     //  skeleton, bind poses, blendshapes, and best-effort materials/textures.
     //
-    //  The Weight Studio plugin WRITES .vbx; the companion Reader plugin READS it
+    //  The Weight Studio plugin writes .vbx; the companion Reader plugin reads it
     //  and reconstructs the avatar at VNyan runtime with all influences intact.
     //
     //  This file (the data classes + serializer) is shared verbatim between both

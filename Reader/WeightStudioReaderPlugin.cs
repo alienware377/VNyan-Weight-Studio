@@ -58,7 +58,7 @@ namespace VNyanWeightStudioReader
 
         public void Awake()
         {
-            // PROBE: log VNyan's BOOT-DEFAULT skin-weights quality before any plugin code
+            // Probe: log VNyan's boot-default skin-weights quality before any plugin code
             // touches it. If this reads "Unlimited", a plain >4-weight .vsfavatar would
             // render correctly with no plugin at all. If it reads "FourBones"/etc., the
             // host caps skinning at 4 unless something flips this global at runtime.
@@ -201,7 +201,7 @@ namespace VNyanWeightStudioReader
             }
             try
             {
-                // Find the live VNyan avatar BEFORE we add ours to the scene, so we can
+                // Find the live VNyan avatar before we add ours to the scene, so we can
                 // (a) borrow its real materials (correct MToon/VRM shaders the VBX can't
                 // carry) and (b) hide it so the loaded copy replaces it instead of
                 // duplicating it.
@@ -235,7 +235,7 @@ namespace VNyanWeightStudioReader
                         // Link blendshapes so VNyan's expressions/visemes/blinks (which it
                         // writes to the original renderers) get mirrored onto the copy.
                         mirror = BuildMirror(go, original.transform);
-                        // Hide only the original's RENDERERS; keep its GameObject active so
+                        // Hide only the original's renderers; keep its GameObject active so
                         // VNyan keeps animating the shared bones our meshes ride on.
                         hid = HideRenderers(original);
                         Debug.Log("[WeightStudioReader] Replaced live avatar '" + original.name +
@@ -312,7 +312,7 @@ namespace VNyanWeightStudioReader
         }
 
         // Disable (but don't deactivate) the avatar's mesh renderers, returning the ones
-        // we actually turned off so they can be restored. Keeping the GameObject ACTIVE is
+        // we actually turned off so they can be restored. Keeping the GameObject active is
         // what lets VNyan keep animating the bones our re-skinned meshes ride on.
         static Renderer[] HideRenderers(GameObject avatar)
         {

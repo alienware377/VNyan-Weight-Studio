@@ -511,7 +511,7 @@ namespace WeightStudio
 
         // =====================================================================
         //  Editor ScriptedImporter for .vbx  (Unity 2019.4.x + 2022.3.x)
-        //  Rebuilds the avatar with UNLIMITED bone influences. Self-contained:
+        //  Rebuilds the avatar with unlimited bone influences. Self-contained:
         //  inlines a VBX reader so it needs no other Weight Studio script.
         // =====================================================================
         const string SCRIPT_VBX_IMPORTER =

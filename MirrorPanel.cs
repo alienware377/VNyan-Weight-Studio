@@ -55,7 +55,7 @@ namespace VNyanWeightStudio
 
         void MirrorStart(int op)
         {
-            if (mirBusy) { SetStatus("Mirror already running - one moment."); return; }
+            if (mirBusy) { SetStatus("Mirror is already running, one moment."); return; }
             if (model == null || !model.Loaded) { SetStatus("Load a mesh first."); return; }
             if (brush.activeBone < 0 || brush.activeBone >= model.boneNames.Length)
             { SetStatus("Pick a bone in the bone list first."); return; }
@@ -76,7 +76,7 @@ namespace VNyanWeightStudio
         }
 
         // Watch a spread of vertices for ~a third of a second; if anything drifts,
-        // tracking/animation is live and projection would smear - block it.
+        // tracking/animation is live and projection would smear, so block it.
         IEnumerator MirrorMotionCheckThenRun(int op)
         {
             mirBusy = true;
@@ -101,7 +101,7 @@ namespace VNyanWeightStudio
             if (worst > 0.002f)
             {
                 SetStatus("Movement detected (" + (worst * 1000f).ToString("0.#") +
-                    " mm) - pause tracking/animations/Pose Studio playback, hold still, then click again.");
+                    " mm). Pause tracking/animations/Pose Studio playback, hold still, then click again.");
                 yield break;
             }
             MirrorRun(op);

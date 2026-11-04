@@ -5,7 +5,7 @@ using UnityEngine;
 namespace VNyanWeightStudio
 {
     /// <summary>
-    /// Shape-key weights as VNyan actually RENDERS them.
+    /// Shape-key weights as VNyan renders them.
     ///
     /// VNyan zeroes an avatar's shape keys early in every frame and sets them again after the
     /// plugins' LateUpdate: in Update and LateUpdate a shape key reads 0, and from onPreCull to the
