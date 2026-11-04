@@ -101,7 +101,7 @@ public static class WeightStudioBuild
         root.AddComponent<VNyanWeightStudio.WindowDrag>();
 
         // ---- fixed window frame ----
-        // The window is a FIXED height. A pinned Title sits at the top; a pinned
+        // The window is a fixed height. A pinned Title sits at the top; a pinned
         // tooltip panel + Close button sit at the bottom; everything else lives in a
         // vertical ScrollRect (with a visible scrollbar) so the panel never outgrows
         // the VNyan window no matter how many tools we add.

@@ -12,10 +12,10 @@ namespace VNyanWeightStudio
     ///    the other side (same bone)
     ///
     /// Matching methods:
-    ///  - exact: match in MESH LOCAL rest space (the model's default/bind pose,
+    ///  - exact: match in mesh-local rest space (the model's default/bind pose,
     ///    i.e. the VRM default position). Snap-grid lookup with a tiny tolerance,
     ///    so true mirror-modelled meshes map 1:1.
-    ///  - projection: match in avatar-root local space using the CURRENTLY POSED
+    ///  - projection: match in avatar-root local space using the currently posed
     ///    (baked) vertex positions, blending the 3 nearest mirrored verts by
     ///    inverse distance. Pose must be still and symmetric for good results.
     ///

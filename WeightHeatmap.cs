@@ -5,10 +5,10 @@ namespace VNyanWeightStudio
     /// <summary>
     /// Live weight-paint heatmap overlay, à la Blender's weight-paint mode.
     ///
-    /// Spawns a second SkinnedMeshRenderer that SHARES the model's working mesh,
+    /// Spawns a second SkinnedMeshRenderer that shares the model's working mesh,
     /// bones, bindposes and rootBone, so it deforms pixel-for-pixel on top of the
     /// real avatar, but draws with an unlit, transparent vertex-colour material.
-    /// Each vertex is tinted by the ACTIVE bone's weight using the classic
+    /// Each vertex is tinted by the active bone's weight using the classic
     /// blue(0) -> cyan -> green -> yellow -> red(1) ramp.
     ///
     /// Opacity is the overlay material's tint alpha, so the user can fade it down to
@@ -114,7 +114,7 @@ namespace VNyanWeightStudio
         /// <summary>
         /// Copies shape-key weights onto the overlay (a second renderer starts with all of them
         /// at 0, so it showed the bare shape, hidden inside a body/outfit enlarged by shape keys).
-        /// Pass the weights captured at the END of the frame: VNyan zeroes them mid-frame and
+        /// Pass the weights captured at the end of the frame: VNyan zeroes them mid-frame and
         /// sets them again after the plugins' LateUpdate. Nobody else writes the overlay's
         /// weights, so they hold until the next capture. Null = read the base renderer now.
         /// </summary>

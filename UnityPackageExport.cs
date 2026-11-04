@@ -532,7 +532,7 @@ namespace WeightStudio
 {
     /// <summary>
     /// Imports a Weight Studio '.vbx' avatar as a prefab asset: skeleton, skinned
-    /// meshes with an UNLIMITED number of bone influences per vertex, blendshapes,
+    /// meshes with an unlimited number of bone influences per vertex, blendshapes,
     /// and best-effort materials/textures. Unlike FBX (capped at 4 bones/vertex
     /// unless Skin Weights = Custom), a .vbx keeps every influence.
     /// </summary>

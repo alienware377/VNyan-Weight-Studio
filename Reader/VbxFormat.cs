@@ -29,12 +29,12 @@ namespace VNyanWeightStudio
         //   2: adds the colliders block (auto-fit physics colliders) at the end.
         //   3: full generic materials: per material we now also store the shader's
         //       complete property set (every float/color/vector/texture + keywords +
-        //       render queue) so ANY shader (Standard, MToon, Poiyomi, …) reconstructs
+        //       render queue) so any shader (Standard, MToon, Poiyomi, …) reconstructs
         //       exactly wherever that shader exists at load time. Textures are pooled at
         //       the doc level (shared textures stored once) in a trailing block.
         //   4: adds an optional embedded source AssetBundle (the original .vsfavatar
         //       bytes) in a trailing block. The Reader can load it in-memory at runtime
-        //       and harvest the REAL, fully-compiled material instances (e.g. locked
+        //       and harvest the real, fully-compiled material instances (e.g. locked
         //       Poiyomi, which can't be reconstructed from properties alone) and assign
         //       them to the rebuilt meshes by renderer name / submesh. Makes the .vbx
         //       truly self-contained for shaders absent from the load-time runtime.
@@ -138,7 +138,7 @@ namespace VNyanWeightStudio
         public byte[] emissionTexPng;   // null if none
 
         // v3: full generic property capture. When the named shader exists at load
-        // time these reconstruct the material exactly, for ANY shader.
+        // time these reconstruct the material exactly, for any shader.
         public string[] keywords;                                  // enabled shader keywords
         public List<VbxMatFloat>   floats   = new List<VbxMatFloat>();   // Float/Range/Int props
         public List<VbxMatColor>   colors   = new List<VbxMatColor>();   // Color props

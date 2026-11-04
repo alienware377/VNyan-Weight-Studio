@@ -20,7 +20,7 @@ namespace VNyanWeightStudio
             VbxDoc doc = Build(avatarRoot, renderers, animator, colliders);
 
             // v4: optionally embed the source AssetBundle (.vsfavatar) so the Reader can
-            // recover the REAL compiled materials (locked Poiyomi, etc.) for shaders that
+            // recover the real compiled materials (locked Poiyomi, etc.) for shaders that
             // don't exist in the load-time runtime. Costs file size (the source bundle's
             // geometry/textures are duplicated) but makes the .vbx truly self-contained.
             if (!string.IsNullOrEmpty(embeddedBundlePath))
@@ -50,7 +50,7 @@ namespace VNyanWeightStudio
 
             foreach (var t in order)
             {
-                // NOTE: do NOT call index.TryGetValue(t.parent, ...) here: the avatar root
+                // Note: do not call index.TryGetValue(t.parent, ...) here: the avatar root
                 // has a null parent, and Dictionary.TryGetValue(null) throws ArgumentNullException
                 // ("Value cannot be null. Parameter name: key"). The parent index is computed
                 // safely below with an explicit null guard.

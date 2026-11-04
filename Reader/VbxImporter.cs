@@ -61,7 +61,7 @@ namespace VNyanWeightStudioReader
             // For a standalone load, shaders absent from this runtime (locked Poiyomi,
             // etc.) can't be reconstructed from captured properties. If the .vbx embeds
             // the original .vsfavatar bytes, load that bundle in-memory and harvest the
-            // REAL compiled material instances to assign to our rebuilt meshes.
+            // Real compiled material instances to assign to our rebuilt meshes.
             SourceMaterialBank bank = null;
             if (PreferEmbeddedBundle && doc.embeddedBundle != null && doc.embeddedBundle.Length > 0)
                 bank = SourceMaterialBank.TryLoad(doc.embeddedBundle);
@@ -145,7 +145,7 @@ namespace VNyanWeightStudioReader
             smr.updateWhenOffscreen = true;
             smr.localBounds = mesh.bounds;
 
-            // materials: prefer the REAL compiled materials from the embedded source
+            // materials: prefer the real compiled materials from the embedded source
             // bundle (faithful locked-Poiyomi etc.), reconstructing only what's missing.
             smr.sharedMaterials = ResolveMaterials(vm, subCount, doc, texCache, bank);
         }
@@ -620,7 +620,7 @@ namespace VNyanWeightStudioReader
         }
 
         // Some shaders (notably VRM/MToon) carry fixed-function render state (blend mode,
-        // ZWrite, cull, stencil, outline, keyword gating) that is NOT configured just by
+        // ZWrite, cull, stencil, outline, keyword gating) that is not configured just by
         // setting their float/color/texture properties. The shader's own setup routine has
         // to push those values into the material's render state, or it renders wrong (often
         // fully invisible). UniVRM is loaded in VNyan, so call MToon's own

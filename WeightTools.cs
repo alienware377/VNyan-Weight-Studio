@@ -10,7 +10,7 @@ namespace VNyanWeightStudio
         Subtract,   // lower the active bone's weight
         Replace,    // push the active bone's weight toward a target value
         Smooth,     // average the active bone's weight with neighbours
-        Blur        // average ALL influences with neighbours (full Laplacian step)
+        Blur        // average all influences with neighbours (full Laplacian step)
     }
 
     [Serializable]
@@ -349,7 +349,7 @@ namespace VNyanWeightStudio
         }
 
         /// <summary>
-        /// Smooth ONLY the active <paramref name="bone"/>'s weight channel (like the
+        /// Smooth only the active <paramref name="bone"/>'s weight channel (like the
         /// brush's Smooth mode, but over the whole mesh or a selection at once).
         /// Each touched weld's <paramref name="bone"/> weight is iteratively pulled
         /// toward its welded-neighbour average, then the weld is renormalized so the
@@ -374,7 +374,7 @@ namespace VNyanWeightStudio
             }
             else
             {
-                // seed with every weld that carries this bone OR neighbours one that does,
+                // seed with every weld that carries this bone or neighbours one that does,
                 // so the bone's whole influence region (and its boundary) is smoothed.
                 for (int w = 0; w < weldCount; w++)
                 {

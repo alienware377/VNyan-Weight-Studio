@@ -48,7 +48,7 @@ namespace VNyanWeightStudio
 
     /// <summary>
     /// Blender-"Data Transfer"-style skin-weight copy between two meshes, by spatial
-    /// proximity. Bones are matched by NAME (so two different rigs share weights as
+    /// proximity. Bones are matched by name (so two different rigs share weights as
     /// long as bone names line up), with a fallback to raw index. Supports nearest
     /// vertex, smoothed N-nearest averaging, and nearest-surface barycentric sampling.
     /// </summary>
@@ -274,7 +274,7 @@ namespace VNyanWeightStudio
                 src.KNN(p, k, cfg.maxDistance, knnIdx, knnD2);
                 if (knnIdx.Count == 0) { res.skippedNoSource++; continue; }
 
-                // sample weights in NAME space
+                // sample weights in name space
                 Dictionary<string, float> sampled;
                 if (cfg.mapping == TransferMapping.NearestSurface)
                     sampled = SampleSurface(src, p, knnIdx);

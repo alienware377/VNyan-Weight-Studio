@@ -19,83 +19,83 @@ One download, two plugins:
 
 ## What's new in v1.1.0
 
-- **Collider editor window.** Click **Edit Colliders** to pick any collider from a list or
+- Collider editor window: click **Edit Colliders** to pick any collider from a list or
   straight on the model, then move, resize, rotate, switch sphere/capsule, duplicate,
   delete or add one on the active bone. Undo/Redo keeps 50 steps.
-- **Show Colliders.** Wireframes of every collider drawn over the model (spheres cyan,
+- Show Colliders draws wireframes of every collider over the model (spheres cyan,
   capsules yellow, the one you are editing magenta).
-- **Import Colliders.** Load colliders back from any collider config Weight Studio
+- Import Colliders loads colliders back from any collider config Weight Studio
   exported (PhysBones, Jiggle, VRChat PhysBones or DynamicBone JSON). Same names are
-  replaced, new ones are added. **Export Colliders** now asks where to save.
-- **Mirror weights (L <-> R).** Copy the active bone's weights onto its left/right partner,
+  replaced, new ones are added. Export Colliders now asks where to save.
+- Mirror weights (L <-> R): copy the active bone's weights onto its left/right partner,
   or mirror one side of a bone onto its other side. Pick the axis, an exact match in the
   model's default pose or a projection onto the current pose, and how much to mix in.
-- **Foldable sections.** Click a section title (`[+]` / `[-]`) to fold it away. Meshes and
-  Bones start open.
-- **Heatmap follows shape keys.** The weight colours now sit on the shape you actually see,
+- Sections can be folded: click a section title (`[+]` / `[-]`) to fold it away. Meshes
+  and Bones start open.
+- The heatmap follows shape keys, so the weight colours sit on the shape you actually see,
   even when shape keys reshape the body or an outfit.
-- **Brush and Weight Transfer use live shape keys** too, so strokes land where you aim and
+- The brush and Weight Transfer use live shape keys too, so strokes land where you aim and
   transfers sample the visible surface.
-- **Plugin conflict warning.** A note appears under the window when a soft-body or weight
-  plugin (such as Soft Body or Bone Weight Smoother) is changing the avatar while you paint.
-  **Got it** hides it until something changes.
-- **Hidden meshes stay hidden.** The shown/hidden buttons are remembered across restarts
+- A note appears under the window when a soft-body or weight plugin (such as Soft Body or
+  Bone Weight Smoother) is changing the avatar while you paint. **Got it** hides it until
+  something changes.
+- Hidden meshes stay hidden: the shown/hidden buttons are remembered across restarts
   and avatar reloads, and **Save Settings** saves sliders, toggles and that state in one go.
-- **Material edits carried into `.vbx`.** Exporting straight from a `.vsfavatar` file
+- Material edits are carried into `.vbx`. Exporting straight from a `.vsfavatar` file
   (**Ctrl+Shift+E**) applies your saved Material Studio edits when the Material Studio
   plugin is installed, and the Reader lays captured material values over
   the original compiled materials when it loads a `.vbx` on its own.
-- **X close button and update button** in both windows (see
+- Both windows have an X close button and an update button (see
   [Updates](#updates-the-update-vx-button)).
-- Collider **Radius scale** now goes down to 0.05 for very tight fits.
+- Collider Radius scale now goes down to 0.05 for very tight fits.
 
 ## Features
 
-- **Pick a mesh and an active bone** from the loaded avatar.
-- **Paint weights** on the model (turn on Paint mode, hold the left mouse button on the mesh):
+- Pick a mesh and an active bone from the loaded avatar.
+- Paint weights on the model (turn on Paint mode, hold the left mouse button on the mesh):
   - *Add / Sub / Replace*: push the active bone's weight up, down or toward a target.
   - *Smooth*: average a vertex toward its neighbours.
   - *Blur*: soften the whole influence set locally.
-  - Sliders for **radius**, **strength** and **falloff**.
-- **Undo / Redo** for every weight edit: brush strokes (one step per stroke), Smooth,
+  - Sliders for radius, strength and falloff.
+- Undo / Redo for every weight edit: brush strokes (one step per stroke), Smooth,
   Limit, Mirror and Transfer. Buttons in the window, or **Ctrl+Z** (undo) /
   **Ctrl+Shift+Z** (redo). Keeps the last 24 steps per mesh.
-- **Hide / show meshes while painting**: each mesh row has a *shown / hidden* toggle that
+- Hide or show meshes while painting: each mesh row has a *shown / hidden* toggle that
   switches that `SkinnedMeshRenderer` on or off, so hair or clothes can get out of the way
   without being removed from the avatar. The choice is remembered.
-- **Boundary-aware Laplacian smoothing** over the whole mesh, over a brushed selection
+- Boundary-aware Laplacian smoothing over the whole mesh, over a brushed selection
   (hold **Shift** while painting to mark a selection, then *Smooth Sel*), or for the active
   bone only (*Smooth Bone*, *Smooth Bone Sel*).
-- **Limit influences**: cap to N bones per vertex (renormalized) when you want a cheaper
+- Limit influences: cap to N bones per vertex (renormalized) when you want a cheaper
   or VRM-friendly result.
-- **Unlimited influences** are kept internally (`Mesh.SetBoneWeights` +
+- Unlimited influences are kept internally (`Mesh.SetBoneWeights` +
   `SkinWeights.Unlimited`) until you choose to cap or export.
-- **Live heatmap overlay** (Blender weight-paint style): tints the model by the active
+- Live heatmap overlay (Blender weight-paint style): tints the model by the active
   bone's weight (blue = 0, green = 0.5, red = 1) and updates as you paint. An opacity
   slider fades it so the model's real shaders show through.
-- **Mirror weights** across X, Y or Z: active bone to its L/R partner (names like `_L`/`_R`,
+- Mirror weights across X, Y or Z: active bone to its L/R partner (names like `_L`/`_R`,
   `.L`/`.R`, `Left`/`Right`, `L_`/`R_`), or one side of a bone onto its other side.
-- **Weight transfer between meshes** (like Blender's Data Transfer, with more control):
+- Weight transfer between meshes (like Blender's Data Transfer, with more control):
   copy skin weights from one mesh onto another by proximity with *Nearest* (closest
   vertex), *Smooth* (inverse-distance average of N nearby verts) or *Surface* (barycentric
-  on the closest triangle). Bones are matched by **name** (or by order, for identical
+  on the closest triangle). Bones are matched by name (or by order, for identical
   skeletons), with blend amount, max distance, selection-only and normalize options.
-- **Auto-fit colliders**: generate physics colliders that hug the mesh each bone controls.
+- Auto-fit colliders: generate physics colliders that hug the mesh each bone controls.
   The fit is pose-independent (vertices are moved to bone-local space via bindposes, then
   fitted with PCA), so the result is right whatever the current pose. Long bones become
-  **capsules**, round ones **spheres**. Tunable radius scale, minimum bone weight, minimum
+  capsules, round ones spheres. Tunable radius scale, minimum bone weight, minimum
   vertex count, capsules on/off, skip fingers, and humanoid bones only. One generation pass
   feeds every supported physics system:
-  - **VRM spring-bone colliders** baked straight into exported `.vrm`
+  - VRM spring-bone colliders baked straight into exported `.vrm`
     (VRM 0.x `secondaryAnimation.colliderGroups`; VRM 1.0 `VRMC_springBone`).
-  - **VBX** embeds them natively.
-  - **JSON configs** for **JayoPhysBones**, **JayoJigglePhysics**, **VRChat PhysBone** and
-    **DynamicBone**, which can also be imported back.
-- **Collider editor and viewer** (see What's new above).
-- **Export a `.unitypackage`** of Unity-compatible versions of the runtime (collider
+  - VBX embeds them natively.
+  - JSON configs for JayoPhysBones, JayoJigglePhysics, VRChat PhysBone and
+    DynamicBone, which can also be imported back.
+- Collider editor and viewer (see What's new above).
+- Export a `.unitypackage` of Unity-compatible versions of the runtime (collider
   component, spring-bone solver, a JSON collider importer and a `.vbx` importer), targeting
-  **Unity 2019.4.x** and **2022.3.x**.
-- **Tappable tooltips**: every option has a `?` button that explains, in plain language,
+  Unity 2019.4.x and 2022.3.x.
+- Tappable tooltips: every option has a `?` button that explains, in plain language,
   what it does, shown in a tip panel at the bottom of the window.
 
 ## Requirements

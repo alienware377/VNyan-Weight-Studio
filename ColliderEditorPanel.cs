@@ -22,7 +22,7 @@ namespace VNyanWeightStudio
         GameObject colEdWindow;
         int colEdSel = -1;
         bool colEdPick;
-        bool colEdSuppress;              // true while pushing values INTO sliders
+        bool colEdSuppress;              // true while pushing values into sliders
 
         Text colEdStatus;
         Text colEdSelLabel;

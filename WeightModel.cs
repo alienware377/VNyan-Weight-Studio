@@ -299,7 +299,7 @@ namespace VNyanWeightStudio
 
         /// <summary>
         /// Capture the current weights so the very next edit can be undone.
-        /// Call once at the START of a mutating action (e.g. a brush stroke, Smooth,
+        /// Call once at the start of a mutating action (e.g. a brush stroke, Smooth,
         /// Limit, Transfer). Clears the redo stack.
         /// </summary>
         public void PushUndo()

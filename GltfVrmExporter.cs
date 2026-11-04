@@ -13,7 +13,7 @@ namespace VNyanWeightStudio
     /// blendshapes (morph targets), base-colour materials + textures, and the VRM
     /// humanoid bone map.
     ///
-    /// LIMITATION: glTF/VRM skinning is 4 influences per vertex (JOINTS_0/WEIGHTS_0).
+    /// Limitation: glTF/VRM skinning is 4 influences per vertex (JOINTS_0/WEIGHTS_0).
     /// Vertices with more influences are reduced to their 4 strongest and renormalized.
     /// For full &gt;4-influence fidelity, export .vbx instead.
     ///

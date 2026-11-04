@@ -208,7 +208,7 @@ namespace VNyanWeightStudioReader
                 GameObject original = FindLiveAvatar(null);
 
                 // Standalone (no live avatar to borrow real materials from): prefer the
-                // REAL compiled materials embedded in the .vbx (the original .vsfavatar
+                // Real compiled materials embedded in the .vbx (the original .vsfavatar
                 // bundle, which gives faithful locked Poiyomi etc.). Where that's unavailable,
                 // fall back to reconstructing from the v3 property capture (exact shader
                 // if present in VNyan, else remapped to the closest available substitute).
@@ -226,7 +226,7 @@ namespace VNyanWeightStudioReader
                     if (original != null)
                     {
                         int borrowed = BorrowMaterials(go, original.transform);
-                        // Re-skin our meshes onto the LIVE avatar's bones (same rig, matched
+                        // Re-skin our meshes onto the live avatar's bones (same rig, matched
                         // by name) so they're driven by VNyan's animation/tracking. Then we
                         // don't need (and shouldn't keep) our own dead skeleton + Animator.
                         int rebound = RebindToLiveSkeleton(go, original.transform);
@@ -247,7 +247,7 @@ namespace VNyanWeightStudioReader
                     {
                         // Standalone: no live avatar to ride. Place at (near) origin and
                         // make sure nothing is left in an invisible state, then log a full
-                        // diagnostic so we can see WHY a model might not show.
+                        // diagnostic so we can see why a model might not show.
                         go.transform.position = new Vector3(loaded.Count * 0.75f, 0f, 0f);
                         go.transform.rotation = Quaternion.identity;
                         go.transform.localScale = Vector3.one;
@@ -420,7 +420,7 @@ namespace VNyanWeightStudioReader
             if (go == null) yield break;
             try
             {
-                // ALL cameras (including disabled / inactive ones VNyan may drive manually)
+                // All cameras (including disabled / inactive ones VNyan may drive manually)
                 foreach (var cam in Resources.FindObjectsOfTypeAll<Camera>())
                 {
                     if (cam == null) continue;
@@ -497,7 +497,7 @@ namespace VNyanWeightStudioReader
             return outp.ToArray();
         }
 
-        // Repoint each imported SkinnedMeshRenderer's bones[] / rootBone at the LIVE
+        // Repoint each imported SkinnedMeshRenderer's bones[] / rootBone at the live
         // avatar's transforms of the same name. The VBX came from this very avatar, so
         // the rig + rest pose + bindposes match, so assigning the live bones makes the
         // meshes deform with VNyan's animated skeleton. Returns how many bones rebound.

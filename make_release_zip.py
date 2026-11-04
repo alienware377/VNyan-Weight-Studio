@@ -65,12 +65,17 @@ def main():
         if not os.path.isfile(src):
             sys.exit("missing: " + src)
 
-    # install.ps1 must stay pure ASCII (Windows PowerShell 5.1 reads it as ANSI)
+    # text files that ship must be valid UTF-8; install.ps1 must stay pure ASCII
+    # (Windows PowerShell 5.1 reads it as ANSI)
     blobs = {}
     for src, name in entries:
         with open(src, "rb") as f:
             data = f.read()
         if name.endswith((".bat", ".ps1", ".md")) or name == "LICENSE":
+            try:
+                data.decode("utf-8")
+            except UnicodeDecodeError:
+                sys.exit("not valid UTF-8: " + name)
             if name.endswith(".ps1") and any(b > 127 for b in data):
                 sys.exit("non-ASCII byte found in " + name)
             if name.endswith(".bat"):

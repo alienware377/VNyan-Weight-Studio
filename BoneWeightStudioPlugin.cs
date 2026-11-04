@@ -166,7 +166,7 @@ namespace VNyanWeightStudio
             {
                 SaveSettings();
                 ReloadHiddenIfChanged();   // merge on top of other plugins' latest edits
-                // snapshot: shown meshes leave the list; hidden ones are added ONLY if
+                // snapshot: shown meshes leave the list; hidden ones are added only if
                 // the user toggled them here; a mesh hidden by a sim/proxy or another
                 // plugin must not sneak into the shared list.
                 foreach (var smr in meshes)
@@ -664,10 +664,10 @@ namespace VNyanWeightStudio
 
         // ------------------------------------------------------------ mesh / bone lists
 
-        // meshes hidden via OUR shown/hidden buttons, persisted across sessions. Only
+        // meshes hidden via our shown/hidden buttons, persisted across sessions. Only
         // names in this set are ever re-hidden; meshes other plugins disable are ignored.
         readonly HashSet<string> hiddenMeshes = new HashSet<string>();
-        readonly HashSet<string> wsToggled = new HashSet<string>();   // meshes the user clicked in OUR list this session
+        readonly HashSet<string> wsToggled = new HashSet<string>();   // meshes the user clicked in our list this session
         bool hiddenLoaded;
 
         // Root AppData so every plugin can share it even when installed alone.
@@ -1012,7 +1012,7 @@ namespace VNyanWeightStudio
                 // Build reads every vertex into managed memory and bakes textures to PNG,
                 // so all data is captured before Cleanup unloads the bundle. Colliders are
                 // not passed here (they were fitted for the live avatar, not this file).
-                // Embed the source .vsfavatar bytes so the Reader can recover the REAL
+                // Embed the source .vsfavatar bytes so the Reader can recover the real
                 // compiled materials (locked Poiyomi, etc.) on a standalone load.
                 // Live material edits from Material Studio (when it is installed) go onto this
                 // copy too, so the standalone .vbx matches what VNyan shows.
@@ -1080,7 +1080,7 @@ namespace VNyanWeightStudio
                 if (mesh == null) { skipped++; continue; }
                 int vc = mesh.vertexCount;
 
-                // candidate VBX meshes: same renderer name AND same vertex count (same topology)
+                // candidate VBX meshes: same renderer name and same vertex count (same topology)
                 var candidates = new List<VbxMesh>();
                 foreach (var vm in doc.meshes)
                     if (vm.name == smr.name && vm.positions != null && vm.positions.Length == vc)
@@ -1213,7 +1213,7 @@ namespace VNyanWeightStudio
                       + ". See log; now re-export for a clean file.");
         }
 
-        // renderer-local VBX slot -> loaded renderer bone slot, matched by bone NAME
+        // renderer-local VBX slot -> loaded renderer bone slot, matched by bone name
         static int[] BuildLocalToTarget(VbxMesh vm, VbxDoc doc, Dictionary<string, int> nameToSlot)
         {
             int len = vm.boneMap != null ? vm.boneMap.Length : 0;
@@ -1255,7 +1255,7 @@ namespace VNyanWeightStudio
             return top;
         }
 
-        // Collect ONLY the skinned meshes that belong to the single chosen avatar.
+        // Collect only the skinned meshes that belong to the single chosen avatar.
         // FindObjectsOfType grabs every SMR in the scene: other avatars, a Pose Studio
         // copy, and our own heatmap overlay, which would duplicate meshes in an export.
         // Seed from the active/first mesh, find its avatar root, then keep just the

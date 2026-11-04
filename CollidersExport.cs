@@ -8,8 +8,8 @@ namespace VNyanWeightStudio
     /// <summary>
     /// Writes the generated colliders out as sidecar config files for every supported
     /// physics system, so a single auto-fit pass can be consumed by:
-    ///   • JayoPhysBones  → physbones.json   (the user's VNyan PhysBones plugin)
-    ///   • JayoJiggle     → jigglephysics.json(the user's VNyan jiggle plugin)
+    ///   • JayoPhysBones  → physbones.json   (VNyan PhysBones plugin)
+    ///   • JayoJiggle     → jigglephysics.json (VNyan Jiggle Physics plugin)
     ///   • VRChat PhysBone→ *.vrcphysbones.json (VRCPhysBoneCollider field layout)
     ///   • DynamicBone    → *.dynamicbone.json  (DynamicBoneCollider field layout)
     /// VRM 0.x / VRM 1.0 spring-bone colliders are embedded directly inside the

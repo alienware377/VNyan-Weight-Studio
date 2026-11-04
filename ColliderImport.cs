@@ -47,7 +47,7 @@ namespace VNyanWeightStudio
         }
 
         // ---- JayoPhysBones / JayoJiggle: offset is capsule end A when offsetEnd is
-        // present, otherwise the capsule CENTRE with axis+height (total, incl. caps) ----
+        // present, otherwise the capsule centre with axis+height (total, incl. caps) ----
         static ColliderGen.GenCollider FromJayo(JObject o)
         {
             string type = Str(o, "type", "sphere").ToLowerInvariant();
