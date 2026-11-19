@@ -37,12 +37,20 @@ namespace VNyanWeightStudio
             return r.sharedMesh != null && w.Length == r.sharedMesh.blendShapeCount ? w : null;
         }
 
+        public static int Count { get { return captured.Count; } }
+
+        public static void Clear() { captured.Clear(); }
+
+        static readonly List<SkinnedMeshRenderer> retainDrop = new List<SkinnedMeshRenderer>();
+
         /// <summary>Keeps only the renderers still being watched (drops destroyed ones).</summary>
         public static void Retain(ICollection<SkinnedMeshRenderer> keep)
         {
-            var drop = new List<SkinnedMeshRenderer>();
-            foreach (var kv in captured) if (kv.Key == null || !keep.Contains(kv.Key)) drop.Add(kv.Key);
-            foreach (var k in drop) captured.Remove(k);
+            if (captured.Count == 0) return;
+            retainDrop.Clear();
+            foreach (var kv in captured) if (kv.Key == null || !keep.Contains(kv.Key)) retainDrop.Add(kv.Key);
+            for (int i = 0; i < retainDrop.Count; i++) captured.Remove(retainDrop[i]);
+            retainDrop.Clear();
         }
 
         /// <summary>
@@ -91,6 +99,17 @@ namespace VNyanWeightStudio
 
         void CaptureLiveShapes()
         {
+            // Nothing reads the captures while every window is closed and the heatmap
+            // is off, yet activeRenderer/transferSource stay set after closing, which
+            // used to cost one native call per shape key per frame for the whole
+            // session. Bakes only happen from UI clicks, so skipping here is safe.
+            if (!heatmap.Enabled
+                && (window == null || !window.activeSelf)
+                && (colEdWindow == null || !colEdWindow.activeSelf))
+            {
+                if (LiveShapes.Count > 0) LiveShapes.Clear();
+                return;
+            }
             shapeWatch.Clear();
             if (activeRenderer != null) shapeWatch.Add(activeRenderer);
             if (transferSource != null && transferSource != activeRenderer) shapeWatch.Add(transferSource);

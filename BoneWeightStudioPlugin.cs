@@ -26,7 +26,7 @@ namespace VNyanWeightStudio
     /// </summary>
     public partial class BoneWeightStudioPlugin : MonoBehaviour, VNyanInterface.IButtonClickedHandler
     {
-        public const string VERSION = "v1.1.0";
+        public const string VERSION = "v1.1.1";
         // GitHub repo the update check reads (the check stays quiet while there are no releases)
         public const string REPO = "alienware377/VNyan-Weight-Studio";
 

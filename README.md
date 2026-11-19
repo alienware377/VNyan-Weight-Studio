@@ -108,7 +108,7 @@ One download, two plugins:
 
 ## Install
 
-1. Download **`VNyan-Weight-Studio-v1.1.0.zip`** from
+1. Download **`VNyan-Weight-Studio-v1.1.1.zip`** from
    [Releases](https://github.com/alienware377/VNyan-Weight-Studio/releases) and unzip it.
 2. Close VNyan and run **`install.bat`**. It looks for VNyan by itself and asks you to
    confirm, or asks you to **open your VNyan folder** (the one with `VNyan.exe` inside).

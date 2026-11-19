@@ -24,7 +24,7 @@ namespace VNyanWeightStudioReader
     /// </summary>
     public class WeightStudioReaderPlugin : MonoBehaviour, VNyanInterface.IButtonClickedHandler
     {
-        public const string VERSION = "v1.1.0";
+        public const string VERSION = "v1.1.1";
         // GitHub repo the update check reads (shared with Weight Studio; the check stays quiet while there are no releases)
         public const string REPO = "alienware377/VNyan-Weight-Studio";
 
@@ -54,6 +54,7 @@ namespace VNyanWeightStudioReader
             public SkinnedMeshRenderer src;
             public SkinnedMeshRenderer dst;
             public int[] shapeMap;
+            public float[] lastWritten;   // NaN until first write, so frame one always writes
         }
 
         public void Awake()
@@ -570,7 +571,12 @@ namespace VNyanWeightStudioReader
                     map[i] = srcIdx.TryGetValue(dm.GetBlendShapeName(i), out si) ? si : -1;
                     if (map[i] >= 0) matched++;
                 }
-                if (matched > 0) pairs.Add(new MirrorPair { src = src, dst = dst, shapeMap = map });
+                if (matched > 0)
+                {
+                    var last = new float[map.Length];
+                    for (int i = 0; i < last.Length; i++) last[i] = float.NaN;
+                    pairs.Add(new MirrorPair { src = src, dst = dst, shapeMap = map, lastWritten = last });
+                }
             }
             return pairs;
         }
@@ -588,10 +594,17 @@ namespace VNyanWeightStudioReader
                     var mp = pairs[p];
                     if (mp == null || mp.src == null || mp.dst == null) continue;
                     int[] map = mp.shapeMap;
+                    float[] last = mp.lastWritten;
                     for (int i = 0; i < map.Length; i++)
                     {
                         int si = map[i];
-                        if (si >= 0) mp.dst.SetBlendShapeWeight(i, mp.src.GetBlendShapeWeight(si));
+                        if (si < 0) continue;
+                        float w = mp.src.GetBlendShapeWeight(si);
+                        // Only we write the copies, so skipping an unchanged value is safe
+                        // and avoids dirtying the renderer. NaN != NaN forces the first write.
+                        if (w == last[i]) continue;
+                        last[i] = w;
+                        mp.dst.SetBlendShapeWeight(i, w);
                     }
                 }
             }

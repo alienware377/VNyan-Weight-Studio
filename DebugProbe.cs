@@ -19,12 +19,13 @@ namespace VNyanWeightStudio
     {
         float lastProbePoll;
         bool probeRunning;
+        string probeTrigPath;
 
         void ProbeTick()
         {
             if (probeRunning || Time.unscaledTime - lastProbePoll < 2f) return;
             lastProbePoll = Time.unscaledTime;
-            string trig = Path.Combine(Application.persistentDataPath, "WeightStudio_probe.txt");
+            string trig = probeTrigPath ?? (probeTrigPath = Path.Combine(Application.persistentDataPath, "WeightStudio_probe.txt"));
             if (!File.Exists(trig)) return;
             string target = activeRenderer != null ? activeRenderer.name : "";
             try { string s = File.ReadAllText(trig).Trim(); if (s.Length > 0) target = s; File.Delete(trig); } catch { }
